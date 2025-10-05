@@ -2,6 +2,13 @@
 @import "tw-animate-css";
 
 :root {
+  /* Ventoury Travel Theme Colors */
+  --ocean-blue: #0a2463;
+  --coral: #ff6b6b;
+  --sand: #f4e4c1;
+  --white: #ffffff;
+  --charcoal: #2d3142;
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -74,15 +81,16 @@
 
 @theme inline {
   --font-sans: var(--font-inter);
+  --font-body: var(--font-open-sans);
 
-  /* Added KATACHI Studio Color System */
-  --color-neutral-50: #fafafa;
-  --color-neutral-900: #0b0b0b;
-  --color-neutral-800: #1a1a1a;
-  --color-neutral-400: #c9b8a7;
+  /* Ventoury Color System */
+  --color-ocean-blue: #0a2463;
+  --color-coral: #ff6b6b;
+  --color-sand: #f4e4c1;
   --color-white: #ffffff;
+  --color-charcoal: #2d3142;
 
-  /* Added Spacing Scale */
+  /* Spacing Scale */
   --space-1: 8px;
   --space-2: 16px;
   --space-3: 24px;
@@ -94,7 +102,7 @@
   --space-12: 96px;
   --space-15: 120px;
 
-  /* Added Typography Scale */
+  /* Typography Scale */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -162,7 +170,7 @@
     scroll-behavior: smooth;
   }
 
-  /* Added custom scrollbar styling */
+  /* Custom scrollbar styling */
   ::-webkit-scrollbar {
     width: 6px;
   }
@@ -172,22 +180,22 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--color-neutral-400);
+    background: var(--color-charcoal);
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-neutral-800);
+    background: var(--color-ocean-blue);
   }
 
   /* Focus management for accessibility */
   .focus-visible {
-    @apply outline-2 outline-offset-2 outline-neutral-900;
+    @apply outline-2 outline-offset-2 outline-[#0A2463];
   }
 }
 
 @layer utilities {
-  /* Added typography utilities */
+  /* Typography utilities */
   .text-display {
     font-size: var(--text-7xl);
     font-weight: 700;
@@ -208,52 +216,11 @@
     letter-spacing: 0.1em;
   }
 
-  /* Added container utility */
+  /* Container utility */
   .container-custom {
     max-width: 1320px;
     margin: 0 auto;
     padding: 0 var(--space-6);
-  }
-
-  /* Updated glass-panel to be solid white instead of semi-transparent */
-  .glass-panel {
-    backdrop-filter: blur(16px);
-    background: rgba(255, 255, 255, 1);
-    border: 1px solid rgba(229, 229, 229, 1);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  }
-
-  /* Updated glass-dark to be solid white for auth forms */
-  .glass-dark {
-    backdrop-filter: blur(20px) saturate(180%);
-    background: rgba(255, 255, 255, 1);
-    border: 1px solid rgba(229, 229, 229, 1);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  }
-
-  /* Added glass panel utility */
-  .glass-panel {
-    backdrop-filter: blur(16px);
-    background: rgba(255, 255, 255, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  /* Added glass-dark utility for auth pages */
-  .glass-dark {
-    backdrop-filter: blur(20px) saturate(180%);
-    background: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-  }
-
-  /* Added grain texture utility */
-  .grain-texture {
-    background-image: radial-gradient(circle at 1px 1px, rgba(11, 11, 11, 0.15) 1px, transparent 0);
-    background-size: 20px 20px;
-  }
-
-  /* Added auth gradient utility */
-  .auth-gradient {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   }
 
   /* Performance optimizations */

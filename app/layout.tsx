@@ -1,12 +1,13 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Open_Sans } from "next/font/google"
+import { Montserrat, Open_Sans } from "next/font/google"
 import "./globals.css"
+import { AuthProvider } from "@/contexts/AuthContext"
 
-const inter = Inter({
+const montserrat = Montserrat({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-montserrat",
 })
 
 const openSans = Open_Sans({
@@ -16,25 +17,25 @@ const openSans = Open_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "Ventoury",
+  title: "Ventoury - Plan Your Dream Adventure",
   description:
-    "Manage your inventory with confidence. Ventoury is a complete inventory management system for modern businesses, featuring real-time tracking, sales analytics, customer management, and comprehensive reporting.",
+    "Discover, plan, and book unforgettable travel experiences with AI-powered recommendations tailored just for you.",
   generator: "v0.app",
   alternates: {
     canonical: "https://ventoury.app/",
   },
   openGraph: {
     siteName: "Ventoury",
-    title: "Ventoury — Modern Inventory Management",
-    description: "Manage your inventory with confidence. Complete inventory management solution for modern businesses.",
+    title: "Ventoury — AI-Powered Travel Planning",
+    description: "Discover, plan, and book unforgettable travel experiences with AI-powered recommendations.",
     type: "website",
     url: "https://ventoury.app/",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Ventoury — Modern Inventory Management",
-    description: "Manage your inventory with confidence. Complete inventory management solution for modern businesses.",
+    title: "Ventoury — AI-Powered Travel Planning",
+    description: "Discover, plan, and book unforgettable travel experiences with AI-powered recommendations.",
     site: "@ventoury",
   },
 }
@@ -45,8 +46,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${openSans.variable} antialiased`}>
-      <body className="font-body bg-background text-foreground overflow-x-hidden">{children}</body>
+    <html lang="en" className={`${montserrat.variable} ${openSans.variable} antialiased`}>
+      <body className="font-sans bg-background text-foreground overflow-x-hidden">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   )
 }

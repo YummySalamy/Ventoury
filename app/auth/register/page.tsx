@@ -5,6 +5,9 @@ import type React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Mail, Lock, User, Building, ArrowRight, ArrowLeft, Check } from "lucide-react"
 import Link from "next/link"
+import { supabase } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 
 export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState(1)
@@ -15,14 +18,60 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
   })
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+  const { toast } = useToast()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1)
     } else {
-      // Handle registration logic here
-      console.log("Form submitted:", formData)
+      if (formData.password !== formData.confirmPassword) {
+        toast({
+          title: "Passwords don't match",
+          description: "Please make sure your passwords match",
+          variant: "destructive",
+        })
+        return
+      }
+
+      setLoading(true)
+
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              name: formData.name,
+              company: formData.company,
+            },
+            emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/app`,
+          },
+        })
+
+        if (error) throw error
+
+        console.log("[v0] Registration successful:", data.user?.email)
+        toast({
+          title: "Account created!",
+          description: "Please check your email to verify your account.",
+        })
+
+        setTimeout(() => {
+          router.push("/auth/login")
+        }, 2000)
+      } catch (error: any) {
+        console.error("[v0] Registration error:", error)
+        toast({
+          title: "Registration failed",
+          description: error.message || "Something went wrong",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
@@ -58,7 +107,6 @@ export default function RegisterPage() {
           <p className="text-neutral-600 text-lg">Create your account in 3 simple steps</p>
         </div>
 
-        {/* Progress Indicator */}
         <div className="mb-10">
           <div className="flex items-center justify-between">
             {steps.map((step, index) => (
@@ -99,7 +147,6 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit}>
           <AnimatePresence mode="wait">
-            {/* Step 1: Personal Info */}
             {currentStep === 1 && (
               <motion.div
                 key="step1"
@@ -149,7 +196,6 @@ export default function RegisterPage() {
               </motion.div>
             )}
 
-            {/* Step 2: Company Details */}
             {currentStep === 2 && (
               <motion.div
                 key="step2"
@@ -181,7 +227,6 @@ export default function RegisterPage() {
               </motion.div>
             )}
 
-            {/* Step 3: Security */}
             {currentStep === 3 && (
               <motion.div
                 key="step3"
@@ -206,6 +251,7 @@ export default function RegisterPage() {
                       className="w-full pl-12 pr-4 py-4 bg-white border-2 border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all"
                       placeholder="••••••••"
                       required
+                      minLength={8}
                     />
                   </div>
                   <p className="text-xs text-neutral-500 mt-2">Must be at least 8 characters</p>
@@ -233,15 +279,15 @@ export default function RegisterPage() {
             )}
           </AnimatePresence>
 
-          {/* Navigation Buttons */}
           <div className="flex gap-4 mt-8">
             {currentStep > 1 && (
               <motion.button
                 type="button"
                 onClick={goBack}
-                className="flex-1 bg-neutral-100 text-neutral-900 py-4 rounded-xl font-semibold hover:bg-neutral-200 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 bg-neutral-100 text-neutral-900 py-4 rounded-xl font-semibold hover:bg-neutral-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                disabled={loading}
               >
                 <ArrowLeft className="w-5 h-5" />
                 Back
@@ -249,11 +295,12 @@ export default function RegisterPage() {
             )}
             <motion.button
               type="submit"
-              className="flex-1 bg-neutral-900 text-white py-4 rounded-xl font-semibold hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2 shadow-lg"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              className="flex-1 bg-neutral-900 text-white py-4 rounded-xl font-semibold hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: loading ? 1 : 1.02 }}
+              whileTap={{ scale: loading ? 1 : 0.98 }}
+              disabled={loading}
             >
-              {currentStep === 3 ? "Create account" : "Continue"}
+              {loading ? "Creating account..." : currentStep === 3 ? "Create account" : "Continue"}
               <ArrowRight className="w-5 h-5" />
             </motion.button>
           </div>

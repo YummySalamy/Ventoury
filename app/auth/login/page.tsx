@@ -6,15 +6,44 @@ import { motion } from "framer-motion"
 import { Mail, Lock, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
+import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    router.push("/app")
+    setLoading(true)
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) throw error
+
+      console.log("[v0] Login successful:", data.user?.email)
+      toast({
+        title: "Welcome back!",
+        description: "You've successfully signed in.",
+      })
+      router.push("/app")
+    } catch (error: any) {
+      console.error("[v0] Login error:", error)
+      toast({
+        title: "Login failed",
+        description: error.message || "Invalid email or password",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -48,6 +77,7 @@ export default function LoginPage() {
                 className="w-full pl-12 pr-4 py-4 bg-white border-2 border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all"
                 placeholder="you@company.com"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -66,6 +96,7 @@ export default function LoginPage() {
                 className="w-full pl-12 pr-4 py-4 bg-white border-2 border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all"
                 placeholder="••••••••"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -82,11 +113,12 @@ export default function LoginPage() {
 
           <motion.button
             type="submit"
-            className="w-full bg-neutral-900 text-white py-4 rounded-xl font-semibold hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2 shadow-lg"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            className="w-full bg-neutral-900 text-white py-4 rounded-xl font-semibold hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            whileHover={{ scale: loading ? 1 : 1.02 }}
+            whileTap={{ scale: loading ? 1 : 0.98 }}
+            disabled={loading}
           >
-            Sign in
+            {loading ? "Signing in..." : "Sign in"}
             <ArrowRight className="w-5 h-5" />
           </motion.button>
         </form>
