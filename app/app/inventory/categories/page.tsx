@@ -33,9 +33,9 @@ export default function CategoriesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="p-4 sm:p-6 md:p-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
             <h1 className="text-4xl font-bold text-neutral-900">
               Categories <span className="italic font-light text-neutral-600">Overview</span>
@@ -81,8 +81,7 @@ export default function CategoriesPage() {
           </Dialog>
         </div>
 
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <GlassCard>
             <div className="flex items-center gap-4">
               <div className="p-3 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl">
@@ -118,7 +117,7 @@ export default function CategoriesPage() {
           </GlassCard>
         </div>
 
-        <GlassCard className="mb-6">
+        <GlassCard className="mb-4 sm:mb-6">
           <div className="flex gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
@@ -127,8 +126,7 @@ export default function CategoriesPage() {
           </div>
         </GlassCard>
 
-        {/* Categories Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {categories.map((category, index) => (
             <motion.div
               key={category.id}

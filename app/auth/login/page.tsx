@@ -24,7 +24,7 @@ export default function LoginPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="glass-panel rounded-3xl shadow-2xl p-6 sm:p-8 md:p-12">
+      <div className="glass-panel rounded-3xl shadow-2xl p-6 sm:p-8 md:p-12" style={{ backgroundColor: "#ffffff" }}>
         <div className="text-center mb-8">
           <Link href="/" className="inline-block mb-6">
             <span className="text-3xl font-bold text-neutral-900 tracking-tight">Ventoury</span>

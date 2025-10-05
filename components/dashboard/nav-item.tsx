@@ -11,9 +11,10 @@ import type { NavItem } from "./sidebar-items"
 interface NavItemProps {
   item: NavItem
   isCollapsed: boolean
+  onNavigate?: () => void // Added optional callback for mobile menu close
 }
 
-export function NavItemComponent({ item, isCollapsed }: NavItemProps) {
+export function NavItemComponent({ item, isCollapsed, onNavigate }: NavItemProps) {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
 
@@ -70,7 +71,7 @@ export function NavItemComponent({ item, isCollapsed }: NavItemProps) {
           {itemContent}
         </button>
       ) : (
-        <Link href={item.href} className={itemClasses}>
+        <Link href={item.href} className={itemClasses} onClick={onNavigate}>
           {itemContent}
         </Link>
       )}
@@ -99,6 +100,7 @@ export function NavItemComponent({ item, isCollapsed }: NavItemProps) {
                     <Link
                       key={subItem.href}
                       href={subItem.href}
+                      onClick={onNavigate}
                       className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all relative overflow-hidden group ${
                         isSubActive
                           ? "bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-900 text-white font-medium shadow-md"
