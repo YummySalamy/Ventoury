@@ -9,10 +9,16 @@ export interface Product {
   name: string
   sku: string
   price: number
+  cost_price?: number // NEW
+  profit_margin?: number // NEW (auto-calculated by trigger)
   stock_quantity: number
   category_id?: string
   image_url?: string
   description?: string
+  custom_data?: Record<string, any>
+  show_in_marketplace?: boolean // NEW
+  marketplace_order?: number // NEW
+  low_stock_threshold?: number
   is_active: boolean
   user_id: string
   created_at: string
@@ -90,8 +96,12 @@ export function useProducts() {
         .insert({
           ...productData,
           user_id: user.id,
+          custom_data: productData.custom_data || {},
         })
-        .select()
+        .select(`
+          *,
+          categories (id, name, icon)
+        `)
         .single()
 
       if (productError) throw productError
@@ -149,6 +159,7 @@ export function useProducts() {
         .update({
           ...updates,
           image_url: imageUrl,
+          custom_data: updates.custom_data || {},
           updated_at: new Date().toISOString(),
         })
         .eq("id", productId)

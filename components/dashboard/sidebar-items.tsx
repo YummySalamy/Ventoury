@@ -9,11 +9,10 @@ import {
   Boxes,
   Tags,
   TrendingUp,
-  Receipt,
-  UserCircle,
   FileText,
   Wallet,
   CreditCard,
+  Store,
 } from "lucide-react"
 
 export interface NavSubItem {
@@ -50,19 +49,16 @@ export const sidebarItems: NavItem[] = [
     href: "/app/sales",
     icon: ShoppingCart,
     subItems: [
-      { label: "New Sale", href: "/app/sales/new", icon: Receipt },
-      { label: "History", href: "/app/sales/history", icon: FileText },
+      { label: "All History", href: "/app/sales/history", icon: FileText },
       { label: "Reports", href: "/app/sales/reports", icon: TrendingUp },
+      { label: "Accounts Receivable", href: "/app/sales/receivables", icon: CreditCard },
     ],
   },
   {
     label: "Customers",
     href: "/app/customers",
     icon: Users,
-    subItems: [
-      { label: "All Customers", href: "/app/customers/list", icon: Users },
-      { label: "New Customer", href: "/app/customers/new", icon: UserCircle },
-    ],
+    subItems: [{ label: "All Customers", href: "/app/customers/list", icon: Users }],
   },
   {
     label: "Accounting",
@@ -73,6 +69,11 @@ export const sidebarItems: NavItem[] = [
       { label: "Expenses", href: "/app/accounting/expenses", icon: Wallet },
       { label: "Balance", href: "/app/accounting/balance", icon: CreditCard },
     ],
+  },
+  {
+    label: "Web Store",
+    href: "/app/webstore",
+    icon: Store,
   },
   {
     label: "Settings",

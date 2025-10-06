@@ -14,7 +14,7 @@ const integrations = [
     image:
       "https://images.unsplash.com/photo-1624139283078-74a0492f2ee3?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     backgroundImage:
-      "https://images.unsplash.com/photo-1671159593278-d1fb07a378c2?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "https://images.unsplash.com/photo-1671159593278-d1fb07a378c2?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8d2hpdGUlMjBncmFkaWVudHxlbnwwfHwwfHx8MA%3D%3D",
     tint: "bg-blue-50",
   },
   {
@@ -24,7 +24,7 @@ const integrations = [
     image:
       "https://images.unsplash.com/photo-1694261321131-8157dce8e288?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     backgroundImage:
-      "https://images.unsplash.com/photo-1750586256779-cc096cb64e28?q=80&w=1632&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8d2hpdGUlMjBncmFkaWVudHxlbnwwfHwwfHx8MA%3D%3D",
+      "https://images.unsplash.com/photo-1750586256779-cc096cb64e28?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8d2hpdGUlMjBncmFkaWVudHxlbnwwfHwwfHx8MA%3D%3D",
     tint: "bg-purple-50",
   },
   {
@@ -100,12 +100,12 @@ export function IntegrationsSection() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="font-bold mb-6 text-7xl"
+                  className="font-bold mb-6 text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
                 >
                   <AnimatedText text={activeIntegrationData.name} delay={0.2} />
                 </motion.h2>
               </AnimatePresence>
-              <p className="text-lg text-white/90 leading-relaxed max-w-2xl">
+              <p className="text-base sm:text-lg text-white/90 leading-relaxed max-w-2xl">
                 Connect Ventoury with your favorite tools and platforms. Seamless integrations that keep your data
                 synchronized and your workflow efficient.
               </p>

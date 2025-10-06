@@ -1,7 +1,8 @@
 "use client"
 import { useState } from "react"
+import type React from "react"
 import { motion } from "framer-motion"
-import { Plus, Search, Tag, Package, TrendingUp } from "lucide-react"
+import { Plus, Search, Tag, Package, TrendingUp, Edit, Trash2, Loader2 } from "lucide-react"
 import { GlassCard } from "@/components/dashboard/glass-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,23 +15,82 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-
-const categories = [
-  { id: 1, name: "Electronics", products: 45, value: "$12,450", growth: "+12.5%", color: "from-blue-500 to-cyan-600" },
-  { id: 2, name: "Accessories", products: 120, value: "$8,230", growth: "+8.3%", color: "from-purple-500 to-pink-600" },
-  { id: 3, name: "Furniture", products: 28, value: "$15,670", growth: "+15.2%", color: "from-orange-500 to-red-600" },
-  {
-    id: 4,
-    name: "Office Supplies",
-    products: 89,
-    value: "$5,890",
-    growth: "+5.7%",
-    color: "from-green-500 to-emerald-600",
-  },
-]
+import { useCategories } from "@/hooks/useCategories"
+import { useToast } from "@/hooks/use-toast"
 
 export default function CategoriesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    icon: "tag",
+  })
+  const [isCreating, setIsCreating] = useState(false)
+  const [isDeleting, setIsDeleting] = useState<string | null>(null)
+
+  const { categories, loading, error, createCategory, deleteCategory } = useCategories()
+  const { toast } = useToast()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    setIsCreating(true)
+
+    try {
+      const { error } = await createCategory({
+        name: formData.name,
+        description: formData.description,
+        icon: formData.icon,
+        is_active: true,
+      })
+
+      if (error) throw new Error(error)
+
+      toast({
+        title: "Category created!",
+        description: `${formData.name} has been added.`,
+      })
+
+      setFormData({ name: "", description: "", icon: "tag" })
+      setIsDialogOpen(false)
+    } catch (err: any) {
+      toast({
+        title: "Error creating category",
+        description: err.message || "Failed to create category",
+        variant: "destructive",
+      })
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
+  const handleDelete = async (categoryId: string, categoryName: string) => {
+    if (!confirm(`Are you sure you want to delete ${categoryName}?`)) return
+
+    setIsDeleting(categoryId)
+
+    try {
+      const { error } = await deleteCategory(categoryId)
+      if (error) throw new Error(error)
+
+      toast({
+        title: "Category deleted",
+        description: `${categoryName} has been removed.`,
+      })
+    } catch (err: any) {
+      toast({
+        title: "Error deleting category",
+        description: err.message || "Failed to delete category",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(null)
+    }
+  }
+
+  const totalCategories = categories.length
+  const totalProducts = categories.reduce((sum, cat) => sum + (cat.product_count || 0), 0)
+  const totalValue = categories.reduce((sum, cat) => sum + (cat.total_value || 0), 0)
 
   return (
     <div className="p-4 sm:p-6 md:p-8">
@@ -55,28 +115,45 @@ export default function CategoriesPage() {
                 <DialogTitle>Add New Category</DialogTitle>
                 <DialogDescription>Create a new product category</DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="categoryName">Category Name</Label>
-                  <Input id="categoryName" placeholder="Enter category name" />
+              <form onSubmit={handleSubmit}>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="categoryName">Category Name</Label>
+                    <Input
+                      id="categoryName"
+                      placeholder="Enter category name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="description">Description</Label>
+                    <textarea
+                      id="description"
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      placeholder="Category description"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    />
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Description</Label>
-                  <textarea
-                    id="description"
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    placeholder="Category description"
-                  />
+                <div className="flex justify-end gap-3">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isCreating}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="bg-neutral-900 hover:bg-neutral-800" disabled={isCreating}>
+                    {isCreating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      "Create Category"
+                    )}
+                  </Button>
                 </div>
-              </div>
-              <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button className="bg-neutral-900 hover:bg-neutral-800" onClick={() => setIsDialogOpen(false)}>
-                  Create Category
-                </Button>
-              </div>
+              </form>
             </DialogContent>
           </Dialog>
         </div>
@@ -89,7 +166,7 @@ export default function CategoriesPage() {
               </div>
               <div>
                 <p className="text-sm text-neutral-600">Total Categories</p>
-                <p className="text-2xl font-bold text-neutral-900">12</p>
+                <p className="text-2xl font-bold text-neutral-900">{totalCategories}</p>
               </div>
             </div>
           </GlassCard>
@@ -100,7 +177,7 @@ export default function CategoriesPage() {
               </div>
               <div>
                 <p className="text-sm text-neutral-600">Total Products</p>
-                <p className="text-2xl font-bold text-neutral-900">282</p>
+                <p className="text-2xl font-bold text-neutral-900">{totalProducts}</p>
               </div>
             </div>
           </GlassCard>
@@ -111,7 +188,7 @@ export default function CategoriesPage() {
               </div>
               <div>
                 <p className="text-sm text-neutral-600">Total Value</p>
-                <p className="text-2xl font-bold text-neutral-900">$42,240</p>
+                <p className="text-2xl font-bold text-neutral-900">${totalValue.toFixed(2)}</p>
               </div>
             </div>
           </GlassCard>
@@ -126,36 +203,88 @@ export default function CategoriesPage() {
           </div>
         </GlassCard>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-          {categories.map((category, index) => (
-            <motion.div
-              key={category.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <GlassCard className="hover:shadow-xl transition-shadow cursor-pointer">
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`p-3 bg-gradient-to-br ${category.color} rounded-xl`}>
-                    <Tag className="w-6 h-6 text-white" />
+        {loading && (
+          <GlassCard>
+            <div className="text-center py-12">
+              <div className="w-12 h-12 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-neutral-600">Loading categories...</p>
+            </div>
+          </GlassCard>
+        )}
+
+        {error && (
+          <GlassCard>
+            <div className="text-center py-12">
+              <p className="text-red-600">Error: {error}</p>
+            </div>
+          </GlassCard>
+        )}
+
+        {!loading && !error && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+            {categories.length === 0 ? (
+              <div className="col-span-full">
+                <GlassCard>
+                  <div className="text-center py-12 text-neutral-600">
+                    No categories yet. Create your first category to get started!
                   </div>
-                  <span className="text-sm font-semibold text-green-600">{category.growth}</span>
-                </div>
-                <h3 className="text-xl font-bold text-neutral-900 mb-2">{category.name}</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-neutral-600">Products</span>
-                    <span className="font-semibold text-neutral-900">{category.products}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-neutral-600">Total Value</span>
-                    <span className="font-semibold text-neutral-900">{category.value}</span>
-                  </div>
-                </div>
-              </GlassCard>
-            </motion.div>
-          ))}
-        </div>
+                </GlassCard>
+              </div>
+            ) : (
+              categories.map((category, index) => (
+                <motion.div
+                  key={category.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <GlassCard className="hover:shadow-xl transition-shadow cursor-pointer">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="p-3 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl">
+                        <Tag className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex gap-1">
+                        <button className="p-2 hover:bg-neutral-100 rounded-lg transition-colors">
+                          <Edit className="w-4 h-4 text-neutral-600" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(category.id, category.name)}
+                          className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                          disabled={isDeleting === category.id}
+                        >
+                          {isDeleting === category.id ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-bold text-neutral-900 mb-2">{category.name}</h3>
+                    {category.description && (
+                      <p className="text-sm text-neutral-600 mb-4 line-clamp-2">{category.description}</p>
+                    )}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-neutral-600">Products</span>
+                        <span className="font-semibold text-neutral-900">{category.product_count || 0}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-neutral-600">Total Value</span>
+                        <span className="font-semibold text-neutral-900">
+                          ${(category.total_value || 0).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </GlassCard>
+                </motion.div>
+              ))
+            )}
+          </div>
+        )}
       </motion.div>
     </div>
   )
