@@ -217,7 +217,10 @@ export default function PublicInvoicePage() {
             <h3 className="font-semibold text-lg mb-4">Items</h3>
             <div className="space-y-3">
               {items?.map((item: any, index: number) => (
-                <div key={index} className="flex items-center gap-4 p-4 bg-neutral-50 rounded-lg">
+                <div
+                  key={`${item.product_name}-${index}`}
+                  className="flex items-center gap-4 p-4 bg-neutral-50 rounded-lg"
+                >
                   {item.image_url && (
                     <img
                       src={item.image_url || "/placeholder.svg"}
@@ -297,7 +300,7 @@ export default function PublicInvoicePage() {
                   {installments.map((installment: any) => {
                     const daysOverdue = installment.status === "late" ? getDaysOverdue(installment.due_date) : 0
                     return (
-                      <tr key={installment.id} className="border-b last:border-0">
+                      <tr key={installment.payment_number} className="border-b last:border-0">
                         <td className="py-4 px-2 font-medium">{installment.payment_number}</td>
                         <td className="py-4 px-2 font-semibold">${installment.amount.toFixed(2)}</td>
                         <td className="py-4 px-2">

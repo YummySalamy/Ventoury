@@ -256,7 +256,7 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="backdrop-blur-md bg-white/50 border-neutral-200 hover:bg-white/80 rounded-full"
+                                className="backdrop-blur-md bg-white/50 border-neutral-200 hover:bg-white/80 rounded-full cursor-pointer"
                                 onClick={() => {
                                   if (!sale.public_token) {
                                     toast({
@@ -274,7 +274,7 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                               </Button>
                               <Button
                                 size="sm"
-                                className="bg-black hover:bg-neutral-800 text-white rounded-full"
+                                className="bg-black hover:bg-neutral-800 text-white rounded-full cursor-pointer"
                                 onClick={() => {
                                   if (!sale.public_token) {
                                     toast({
