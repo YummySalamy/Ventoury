@@ -135,10 +135,25 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
           </DialogHeader>
 
           <Tabs defaultValue="info" className="flex-1 overflow-hidden flex flex-col">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="info">Information</TabsTrigger>
-              <TabsTrigger value="history">Purchase History</TabsTrigger>
-              <TabsTrigger value="behavior">Payment Behavior</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 bg-neutral-100/80 backdrop-blur-sm p-1 rounded-xl">
+              <TabsTrigger
+                value="info"
+                className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200 text-xs sm:text-sm px-2 sm:px-4 py-2"
+              >
+                Info
+              </TabsTrigger>
+              <TabsTrigger
+                value="history"
+                className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200 text-xs sm:text-sm px-2 sm:px-4 py-2"
+              >
+                History
+              </TabsTrigger>
+              <TabsTrigger
+                value="behavior"
+                className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200 text-xs sm:text-sm px-2 sm:px-4 py-2"
+              >
+                Behavior
+              </TabsTrigger>
             </TabsList>
 
             <div className="flex-1 overflow-y-auto mt-4">

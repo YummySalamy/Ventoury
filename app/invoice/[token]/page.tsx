@@ -221,12 +221,16 @@ export default function PublicInvoicePage() {
                   key={`${item.product_name}-${index}`}
                   className="flex items-center gap-4 p-4 bg-neutral-50 rounded-lg"
                 >
-                  {item.image_url && (
+                  {item.image_url ? (
                     <img
                       src={item.image_url || "/placeholder.svg"}
                       alt={item.product_name}
                       className="w-16 h-16 object-cover rounded-lg shrink-0"
                     />
+                  ) : (
+                    <div className="w-16 h-16 bg-black rounded-lg flex items-center justify-center shrink-0">
+                      <Package className="w-8 h-8 text-white" />
+                    </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold truncate">{item.product_name}</p>

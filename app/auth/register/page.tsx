@@ -3,7 +3,19 @@ import { useState } from "react"
 import type React from "react"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { Mail, Lock, User, Building, ArrowRight, ArrowLeft, Check, Eye, EyeOff, AlertCircle } from "lucide-react"
+import {
+  Mail,
+  Lock,
+  User,
+  Building,
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
@@ -22,6 +34,7 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [registrationSuccess, setRegistrationSuccess] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -59,14 +72,7 @@ export default function RegisterPage() {
 
         if (authError) throw authError
 
-        toast({
-          title: "Account created!",
-          description: "Please check your email to verify your account.",
-        })
-
-        setTimeout(() => {
-          router.push("/auth/login")
-        }, 2000)
+        setRegistrationSuccess(true)
       } catch (err: any) {
         console.error("[v0] Registration error:", err)
 
@@ -124,6 +130,64 @@ Thank you!`
     { number: 2, title: "Company Details" },
     { number: 3, title: "Security" },
   ]
+
+  if (registrationSuccess) {
+    return (
+      <motion.div
+        className="w-full max-w-2xl mx-auto"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="glass-panel rounded-3xl shadow-2xl p-8 sm:p-12" style={{ backgroundColor: "#ffffff" }}>
+          <div className="text-center space-y-6">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full"
+            >
+              <CheckCircle2 className="w-12 h-12 text-green-600" />
+            </motion.div>
+
+            <div className="space-y-3">
+              <h1 className="text-4xl font-bold text-neutral-900">Congratulations!</h1>
+              <p className="text-lg text-neutral-600">Your account has been created successfully</p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 space-y-3">
+              <div className="flex items-center justify-center gap-2 text-blue-900">
+                <Mail className="w-5 h-5" />
+                <p className="font-semibold">Check your email</p>
+              </div>
+              <p className="text-sm text-blue-800">We've sent a verification link to:</p>
+              <p className="font-mono text-sm font-semibold text-blue-900 bg-blue-100 px-4 py-2 rounded-lg break-all">
+                {formData.email}
+              </p>
+              <p className="text-xs text-blue-700 mt-3">
+                Please click the link in the email to verify your account before signing in.
+              </p>
+            </div>
+
+            <motion.button
+              onClick={() => router.push("/auth/login")}
+              className="w-full bg-neutral-900 text-white py-4 rounded-xl font-semibold hover:bg-neutral-800 transition-colors flex items-center justify-center gap-3 shadow-lg mt-6"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Check className="w-5 h-5" />
+              Ready, go to Sign In
+              <ArrowRight className="w-5 h-5" />
+            </motion.button>
+
+            <p className="text-xs text-neutral-500 mt-4">
+              Didn't receive the email? Check your spam folder or contact support.
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    )
+  }
 
   return (
     <motion.div
