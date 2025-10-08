@@ -23,6 +23,8 @@ export interface Sale {
   paid_installments?: number
   notes?: string
   sale_date: string
+  sale_number?: string // Added sale_number field
+  public_token?: string // Added public_token field for invoice sharing
   created_at: string
 }
 
@@ -129,6 +131,8 @@ export function useSales() {
           total_installments: saleData.installments?.count || null,
           paid_installments: 0,
           notes: saleData.notes,
+          sale_number: Math.random().toString(36).substr(2, 9), // Added sale_number generation
+          public_token: Math.random().toString(36).substr(2, 9), // Added public_token generation
         })
         .select()
         .single()

@@ -8,17 +8,17 @@ import { Copy, Check, Share2, ExternalLink } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface ShareInvoiceModalProps {
-  saleId: string
+  publicToken: string
   saleNumber: string
   open: boolean
   onClose: () => void
 }
 
-export function ShareInvoiceModal({ saleId, saleNumber, open, onClose }: ShareInvoiceModalProps) {
+export function ShareInvoiceModal({ publicToken, saleNumber, open, onClose }: ShareInvoiceModalProps) {
   const [copied, setCopied] = useState(false)
   const { toast } = useToast()
 
-  const invoiceUrl = typeof window !== "undefined" ? `${window.location.origin}/invoice/${saleId}` : ""
+  const invoiceUrl = typeof window !== "undefined" ? `${window.location.origin}/invoice/${publicToken}` : ""
 
   const handleCopy = async () => {
     try {

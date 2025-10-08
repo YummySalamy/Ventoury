@@ -384,7 +384,7 @@ export function SaleDetailsModal({ sale, open, onClose }: SaleDetailsModalProps)
 
       {sale && (
         <ShareInvoiceModal
-          saleId={sale.id}
+          publicToken={sale.public_token}
           saleNumber={sale.sale_number}
           open={shareModalOpen}
           onClose={() => setShareModalOpen(false)}

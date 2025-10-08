@@ -253,6 +253,14 @@ export default function SalesHistoryPage() {
   const [saleToShare, setSaleToShare] = useState<any | null>(null)
 
   const handleShareInvoice = (sale: any) => {
+    if (!sale.public_token) {
+      toast({
+        title: "Invoice not available",
+        description: "This sale does not have a public invoice link",
+        variant: "destructive",
+      })
+      return
+    }
     setSaleToShare(sale)
     setShareModalOpen(true)
   }
@@ -826,7 +834,7 @@ export default function SalesHistoryPage() {
 
       {saleToShare && (
         <ShareInvoiceModal
-          saleId={saleToShare.id}
+          publicToken={saleToShare.public_token}
           saleNumber={saleToShare.sale_number}
           open={shareModalOpen}
           onClose={() => {

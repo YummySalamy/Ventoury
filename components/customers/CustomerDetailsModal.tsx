@@ -33,7 +33,7 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
   const [stats, setStats] = useState<CustomerStats | null>(null)
   const [salesHistory, setSalesHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const [shareInvoiceId, setShareInvoiceId] = useState<string | null>(null)
+  const [shareInvoiceToken, setShareInvoiceToken] = useState<string | null>(null)
   const [shareInvoiceNumber, setShareInvoiceNumber] = useState<string>("")
   const [shareInvoiceOpen, setShareInvoiceOpen] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
@@ -257,7 +257,17 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                                 variant="outline"
                                 size="sm"
                                 className="backdrop-blur-md bg-white/50 border-neutral-200 hover:bg-white/80 rounded-full"
-                                onClick={() => window.open(`/invoice/${sale.id}`, "_blank")}
+                                onClick={() => {
+                                  if (!sale.public_token) {
+                                    toast({
+                                      title: "Invoice not available",
+                                      description: "This sale does not have a public invoice link",
+                                      variant: "destructive",
+                                    })
+                                    return
+                                  }
+                                  window.open(`/invoice/${sale.public_token}`, "_blank")
+                                }}
                               >
                                 <ExternalLink className="w-4 h-4 mr-2" />
                                 View
@@ -266,7 +276,15 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                                 size="sm"
                                 className="bg-black hover:bg-neutral-800 text-white rounded-full"
                                 onClick={() => {
-                                  setShareInvoiceId(sale.id)
+                                  if (!sale.public_token) {
+                                    toast({
+                                      title: "Invoice not available",
+                                      description: "This sale does not have a public invoice link",
+                                      variant: "destructive",
+                                    })
+                                    return
+                                  }
+                                  setShareInvoiceToken(sale.public_token)
                                   setShareInvoiceNumber(sale.sale_number)
                                   setShareInvoiceOpen(true)
                                 }}
@@ -387,14 +405,14 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
         </DialogContent>
       </Dialog>
 
-      {shareInvoiceId && (
+      {shareInvoiceToken && (
         <ShareInvoiceModal
-          saleId={shareInvoiceId}
+          publicToken={shareInvoiceToken}
           saleNumber={shareInvoiceNumber}
           open={shareInvoiceOpen}
           onClose={() => {
             setShareInvoiceOpen(false)
-            setShareInvoiceId(null)
+            setShareInvoiceToken(null)
             setShareInvoiceNumber("")
           }}
         />

@@ -11,54 +11,34 @@ import { FaWhatsapp } from "react-icons/fa"
 
 export default function PublicInvoicePage() {
   const params = useParams()
-  const invoiceId = params.invoiceId as string
+  const token = params.token as string
 
-  const [sale, setSale] = useState<any>(null)
-  const [installments, setInstallments] = useState<any[]>([])
-  const [storeSettings, setStoreSettings] = useState<any>(null)
+  const [invoiceData, setInvoiceData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadInvoiceData()
-  }, [invoiceId])
+  }, [token])
 
   const loadInvoiceData = async () => {
     try {
       setLoading(true)
 
-      const { data: saleData, error: saleError } = await supabase
-        .from("sales")
-        .select(
-          `
-          *,
-          customers (*),
-          sale_items (
-            *,
-            products (name, image_url, sku)
-          )
-        `,
-        )
-        .eq("id", invoiceId)
-        .single()
+      const { data, error: rpcError } = await supabase.rpc("get_public_invoice", {
+        invoice_token: token,
+      })
 
-      if (saleError) throw saleError
-      setSale(saleData)
+      if (rpcError) throw rpcError
 
-      const { data: profileData } = await supabase.from("profiles").select("*").eq("id", saleData.user_id).single()
-
-      setStoreSettings(profileData)
-
-      if (saleData.payment_type === "credit") {
-        const { data: installmentsData } = await supabase
-          .from("installment_payments")
-          .select("*")
-          .eq("sale_id", invoiceId)
-          .order("payment_number", { ascending: true })
-
-        setInstallments(installmentsData || [])
+      if (!data || !data.sale) {
+        setError("Invoice not found")
+        return
       }
+
+      setInvoiceData(data)
     } catch (err: any) {
+      console.error("[v0] Error loading invoice:", err)
       setError(err.message || "Failed to load invoice")
     } finally {
       setLoading(false)
@@ -77,7 +57,7 @@ export default function PublicInvoicePage() {
     )
   }
 
-  if (error || !sale) {
+  if (error || !invoiceData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-neutral-100 flex items-center justify-center p-4">
         <div className="text-center">
@@ -88,6 +68,8 @@ export default function PublicInvoicePage() {
       </div>
     )
   }
+
+  const { sale, store, customer, items, installments } = invoiceData
 
   const statusConfig: Record<string, { label: string; color: string }> = {
     paid: { label: "Paid", color: "bg-green-100 text-green-800" },
@@ -111,8 +93,8 @@ export default function PublicInvoicePage() {
     return diffDays > 0 ? diffDays : 0
   }
 
-  const primaryColor = storeSettings?.marketplace_theme?.primaryColor || "#0a0a0a"
-  const secondaryColor = storeSettings?.marketplace_theme?.secondaryColor || "#ffffff"
+  const primaryColor = store?.theme?.primaryColor || "#0a0a0a"
+  const secondaryColor = store?.theme?.secondaryColor || "#ffffff"
 
   const generatePaymentMessage = () => {
     const message = `Hola! Quiero realizar el pago de mi factura:\n\n📄 Factura: #${sale.sale_number}\n💰 Total: $${sale.total_amount.toFixed(2)}\n📅 Fecha: ${new Date(sale.sale_date).toLocaleDateString()}\n\n🔗 Ver factura: ${window.location.href}\n\n¿Cuáles son los medios de pago disponibles?`
@@ -127,6 +109,7 @@ export default function PublicInvoicePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-neutral-100 p-4 sm:p-8">
       <div className="max-w-4xl mx-auto">
+        {/* Store Header Banner */}
         <div
           className="relative overflow-hidden rounded-2xl mb-6 p-6 sm:p-8 text-white shadow-xl"
           style={{
@@ -136,19 +119,17 @@ export default function PublicInvoicePage() {
           <div className="relative z-10">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-4">
-                {storeSettings?.business_logo_url && (
+                {store?.logo_url && (
                   <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-white/10 backdrop-blur-sm p-2 border border-white/20 shrink-0">
                     <img
-                      src={storeSettings.business_logo_url || "/placeholder.svg"}
-                      alt={storeSettings.business_name || "Store"}
+                      src={store.logo_url || "/placeholder.svg"}
+                      alt={store.name || "Store"}
                       className="w-full h-full object-contain"
                     />
                   </div>
                 )}
                 <div className="min-w-0">
-                  <h1 className="text-2xl sm:text-3xl font-bold truncate">
-                    {storeSettings?.business_name || "Invoice"}
-                  </h1>
+                  <h1 className="text-2xl sm:text-3xl font-bold truncate">{store?.name || "Invoice"}</h1>
                   <p className="text-white/80 text-sm sm:text-base">Invoice #{sale.sale_number}</p>
                 </div>
               </div>
@@ -157,15 +138,16 @@ export default function PublicInvoicePage() {
               </Badge>
             </div>
 
-            {storeSettings?.business_address && (
+            {store?.address && (
               <div className="flex items-start gap-2 text-white/90 text-sm">
                 <Building2 className="h-4 w-4 mt-0.5 shrink-0" />
-                <p className="break-words">{storeSettings.business_address}</p>
+                <p className="break-words">{store.address}</p>
               </div>
             )}
           </div>
         </div>
 
+        {/* Invoice Details */}
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div className="flex items-center gap-3">
@@ -195,38 +177,37 @@ export default function PublicInvoicePage() {
                 <p className="font-semibold capitalize truncate">{sale.payment_type}</p>
               </div>
             </div>
-            {sale.customers && (
+            {customer && (
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-neutral-100 rounded-lg shrink-0">
                   <User className="h-5 w-5 text-neutral-600" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-neutral-500">Customer</p>
-                  <p className="font-semibold truncate">{sale.customers.name}</p>
+                  <p className="font-semibold truncate">{customer.name}</p>
                 </div>
               </div>
             )}
           </div>
 
           {/* Customer Details */}
-          {sale.customers && (
+          {customer && (
             <div className="border-t pt-6 mb-6">
               <h3 className="font-semibold text-lg mb-4">Bill To</h3>
               <div className="space-y-2">
-                <p className="font-medium">{sale.customers.name}</p>
-                {sale.customers.email && (
+                <p className="font-medium">{customer.name}</p>
+                {customer.email && (
                   <div className="flex items-center gap-2 text-sm text-neutral-600">
                     <Mail className="h-4 w-4" />
-                    {sale.customers.email}
+                    {customer.email}
                   </div>
                 )}
-                {sale.customers.phone && (
+                {customer.phone && (
                   <div className="flex items-center gap-2 text-sm text-neutral-600">
                     <Phone className="h-4 w-4" />
-                    {sale.customers.phone}
+                    {customer.phone}
                   </div>
                 )}
-                {sale.customers.address && <p className="text-sm text-neutral-600">{sale.customers.address}</p>}
               </div>
             </div>
           )}
@@ -235,11 +216,11 @@ export default function PublicInvoicePage() {
           <div className="border-t pt-6">
             <h3 className="font-semibold text-lg mb-4">Items</h3>
             <div className="space-y-3">
-              {sale.sale_items?.map((item: any, index: number) => (
+              {items?.map((item: any, index: number) => (
                 <div key={index} className="flex items-center gap-4 p-4 bg-neutral-50 rounded-lg">
-                  {item.products?.image_url && (
+                  {item.image_url && (
                     <img
-                      src={item.products.image_url || "/placeholder.svg"}
+                      src={item.image_url || "/placeholder.svg"}
                       alt={item.product_name}
                       className="w-16 h-16 object-cover rounded-lg shrink-0"
                     />
@@ -265,7 +246,7 @@ export default function PublicInvoicePage() {
         </div>
 
         {/* Installment Schedule */}
-        {sale.payment_type === "credit" && installments.length > 0 && (
+        {sale.payment_type === "credit" && installments && installments.length > 0 && (
           <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
             <h3 className="font-semibold text-xl mb-6">Payment Schedule</h3>
 
@@ -276,7 +257,7 @@ export default function PublicInvoicePage() {
                   <p className="text-sm font-medium text-green-700">Paid</p>
                 </div>
                 <p className="text-3xl font-bold text-green-900">
-                  {installments.filter((i) => i.status === "paid").length}
+                  {installments.filter((i: any) => i.status === "paid").length}
                 </p>
               </div>
 
@@ -286,7 +267,7 @@ export default function PublicInvoicePage() {
                   <p className="text-sm font-medium text-yellow-700">Pending</p>
                 </div>
                 <p className="text-3xl font-bold text-yellow-900">
-                  {installments.filter((i) => i.status === "pending").length}
+                  {installments.filter((i: any) => i.status === "pending").length}
                 </p>
               </div>
 
@@ -296,7 +277,7 @@ export default function PublicInvoicePage() {
                   <p className="text-sm font-medium text-red-700">Overdue</p>
                 </div>
                 <p className="text-3xl font-bold text-red-900">
-                  {installments.filter((i) => i.status === "late").length}
+                  {installments.filter((i: any) => i.status === "late").length}
                 </p>
               </div>
             </div>
@@ -313,7 +294,7 @@ export default function PublicInvoicePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {installments.map((installment) => {
+                  {installments.map((installment: any) => {
                     const daysOverdue = installment.status === "late" ? getDaysOverdue(installment.due_date) : 0
                     return (
                       <tr key={installment.id} className="border-b last:border-0">
@@ -354,15 +335,17 @@ export default function PublicInvoicePage() {
                                   </TooltipContent>
                                 </Tooltip>
 
-                                <a
-                                  href={`https://wa.me/${storeSettings?.business_whatsapp?.replace(/\D/g, "")}?text=${generateInstallmentPaymentMessage(installment)}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366] hover:bg-[#20BA5A] text-white text-xs font-medium rounded-md transition-colors"
-                                >
-                                  <FaWhatsapp className="h-3.5 w-3.5" />
-                                  Consult
-                                </a>
+                                {store?.whatsapp && (
+                                  <a
+                                    href={`https://wa.me/${store.whatsapp.replace(/\D/g, "")}?text=${generateInstallmentPaymentMessage(installment)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366] hover:bg-[#20BA5A] text-white text-xs font-medium rounded-md transition-colors"
+                                  >
+                                    <FaWhatsapp className="h-3.5 w-3.5" />
+                                    Consult
+                                  </a>
+                                )}
                               </div>
                             </TooltipProvider>
                           )}
@@ -377,28 +360,18 @@ export default function PublicInvoicePage() {
         )}
 
         {/* Store Contact */}
-        {(storeSettings?.business_whatsapp || storeSettings?.business_email) && (
+        {store?.whatsapp && (
           <div className="mt-6 bg-white rounded-2xl shadow-lg p-6 text-center">
             <p className="text-neutral-600 mb-4">Questions about this invoice?</p>
             <div className="flex flex-wrap justify-center gap-3">
-              {storeSettings.business_whatsapp && (
-                <a
-                  href={`https://wa.me/${storeSettings.business_whatsapp.replace(/\D/g, "")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-3 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-lg font-medium transition-colors"
-                >
-                  Contact via WhatsApp
-                </a>
-              )}
-              {storeSettings.business_email && (
-                <a
-                  href={`mailto:${storeSettings.business_email}`}
-                  className="px-6 py-3 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg font-medium transition-colors"
-                >
-                  Send Email
-                </a>
-              )}
+              <a
+                href={`https://wa.me/${store.whatsapp.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-lg font-medium transition-colors"
+              >
+                Contact via WhatsApp
+              </a>
             </div>
           </div>
         )}
