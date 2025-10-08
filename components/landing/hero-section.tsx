@@ -72,7 +72,7 @@ export function HeroSection() {
           <Reveal>
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-tight tracking-tight mb-6 sm:mb-8 px-4">
               <AnimatedText text="Manage your " delay={0.5} />
-              <span className="font-black bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent whitespace-nowrap">
+              <span className="font-black gradient-text-inventory whitespace-nowrap">
                 <AnimatedText text="Inventory" delay={0.9} />
               </span>
               <br />

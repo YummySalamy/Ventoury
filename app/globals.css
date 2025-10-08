@@ -192,6 +192,11 @@
   .focus-visible {
     @apply outline-2 outline-offset-2 outline-[#0A2463];
   }
+
+  /* Add cursor pointer to all buttons globally */
+  button {
+    cursor: pointer;
+  }
 }
 
 @layer utilities {
@@ -214,6 +219,13 @@
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.1em;
+  }
+
+  /* Added iOS Safari gradient text fix for "Inventory" word */
+  .gradient-text-inventory {
+    @apply bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent;
+    -webkit-text-fill-color: transparent;
+    -webkit-box-decoration-break: clone;
   }
 
   /* Container utility */

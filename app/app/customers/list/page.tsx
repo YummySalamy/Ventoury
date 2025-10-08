@@ -751,17 +751,15 @@ export default function CustomersListPage() {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="bg-transparent"
+                                  <button
+                                    className="p-2 hover:bg-neutral-100 rounded-lg transition-colors"
                                     onClick={() => {
                                       setSelectedCustomer(customer)
                                       setDetailsOpen(true)
                                     }}
                                   >
-                                    <Eye className="w-4 h-4" />
-                                  </Button>
+                                    <Eye className="w-4 h-4 text-neutral-600" />
+                                  </button>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                   <p>View Details</p>
@@ -772,14 +770,12 @@ export default function CustomersListPage() {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="bg-transparent"
+                                  <button
+                                    className="p-2 hover:bg-neutral-100 rounded-lg transition-colors"
                                     onClick={() => handleEdit(customer)}
                                   >
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
+                                    <Edit className="w-4 h-4 text-neutral-600" />
+                                  </button>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                   <p>Edit Customer</p>
@@ -790,14 +786,12 @@ export default function CustomersListPage() {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="hover:bg-red-50 hover:text-red-600 hover:border-red-200 bg-transparent"
+                                  <button
+                                    className="p-2 hover:bg-red-50 rounded-lg transition-colors"
                                     onClick={() => setDeleteConfirm({ id: customer.id, name: customer.name })}
                                   >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
+                                    <Trash2 className="w-4 h-4 text-red-600" />
+                                  </button>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                   <p>Delete Customer</p>
@@ -866,33 +860,27 @@ export default function CustomersListPage() {
                             </td>
                             <td className="p-4">
                               <div className="flex justify-end gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="group-hover:text-white"
+                                <button
+                                  className="p-2 hover:bg-neutral-700 rounded-lg transition-colors"
                                   onClick={() => {
                                     setSelectedCustomer(customer)
                                     setDetailsOpen(true)
                                   }}
                                 >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="group-hover:text-white"
+                                  <Eye className="w-4 h-4 group-hover:text-white" />
+                                </button>
+                                <button
+                                  className="p-2 hover:bg-neutral-700 rounded-lg transition-colors"
                                   onClick={() => handleEdit(customer)}
                                 >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="hover:bg-red-600 hover:text-white group-hover:text-white"
+                                  <Edit className="w-4 h-4 group-hover:text-white" />
+                                </button>
+                                <button
+                                  className="p-2 hover:bg-red-500 hover:text-white rounded-lg transition-colors"
                                   onClick={() => setDeleteConfirm({ id: customer.id, name: customer.name })}
                                 >
                                   <Trash2 className="w-4 h-4" />
-                                </Button>
+                                </button>
                               </div>
                             </td>
                           </tr>
@@ -902,26 +890,6 @@ export default function CustomersListPage() {
                   </table>
                 </div>
               </GlassCard>
-            )}
-
-            {totalCount > pageSize && (
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
-                <p className="text-sm text-neutral-600">
-                  Showing {page * pageSize + 1} - {Math.min((page + 1) * pageSize, totalCount)} of {totalCount}
-                </p>
-                <div className="flex gap-2">
-                  <Button variant="outline" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    disabled={(page + 1) * pageSize >= totalCount}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
             )}
           </>
         )}

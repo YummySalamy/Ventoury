@@ -1,6 +1,6 @@
 "use client"
 import { useState, useMemo } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   Download,
   DollarSign,
@@ -15,6 +15,13 @@ import {
   Search,
   ChevronDown,
   Share2,
+  User,
+  Package,
+  CreditCard,
+  Wallet,
+  Calendar,
+  HelpCircle,
+  ImageIcon,
 } from "lucide-react"
 import { GlassCard } from "@/components/dashboard/glass-card"
 import { Button } from "@/components/ui/button"
@@ -46,10 +53,12 @@ import { Badge } from "@/components/ui/badge"
 import { SaleDetailsModal } from "@/components/sales/SaleDetailsModal"
 import { InstallmentHelpDialog } from "@/components/sales/InstallmentHelpDialog"
 import { ShareInvoiceModal } from "@/components/sales/ShareInvoiceModal"
+import { Notification } from "@/components/ui/notification"
 
 interface CartItem {
   product_id: string
   product_name: string
+  product_image?: string
   quantity: number
   unit_price: number
   subtotal: number
@@ -57,15 +66,28 @@ interface CartItem {
 
 export default function SalesHistoryPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [selectedCustomer, setSelectedCustomer] = useState("none")
+  const [selectedCustomer, setSelectedCustomer] = useState("")
   const [paymentType, setPaymentType] = useState<"cash" | "credit" | "debit" | "transfer">("cash")
   const [cart, setCart] = useState<CartItem[]>([])
   const [selectedProduct, setSelectedProduct] = useState("")
-  const [quantity, setQuantity] = useState(1)
+  const [quantity, setQuantity] = useState("1")
   const [installmentCount, setInstallmentCount] = useState(3)
   const [firstDueDate, setFirstDueDate] = useState("")
   const [notes, setNotes] = useState("")
   const [isCreating, setIsCreating] = useState(false)
+  const [showTutorial, setShowTutorial] = useState(false)
+
+  const [notification, setNotification] = useState<{
+    open: boolean
+    type: "success" | "error"
+    title: string
+    content: string
+  }>({
+    open: false,
+    type: "success",
+    title: "",
+    content: "",
+  })
 
   const [searchQuery, setSearchQuery] = useState("")
   const [dateFrom, setDateFrom] = useState("")
@@ -140,6 +162,17 @@ export default function SalesHistoryPage() {
   const handleAddToCart = () => {
     if (!selectedProduct) return
 
+    const qty = Number.parseInt(quantity) || 0
+    if (qty <= 0) {
+      setNotification({
+        open: true,
+        type: "error",
+        title: "Invalid Quantity",
+        content: "Please enter a valid quantity greater than 0",
+      })
+      return
+    }
+
     const product = products.find((p) => p.id === selectedProduct)
     if (!product) return
 
@@ -150,8 +183,8 @@ export default function SalesHistoryPage() {
           item.product_id === selectedProduct
             ? {
                 ...item,
-                quantity: item.quantity + quantity,
-                subtotal: (item.quantity + quantity) * item.unit_price,
+                quantity: item.quantity + qty,
+                subtotal: (item.quantity + qty) * item.unit_price,
               }
             : item,
         ),
@@ -162,36 +195,77 @@ export default function SalesHistoryPage() {
         {
           product_id: product.id,
           product_name: product.name,
-          quantity,
+          product_image: product.image_url,
+          quantity: qty,
           unit_price: product.price,
-          subtotal: quantity * product.price,
+          subtotal: qty * product.price,
         },
       ])
     }
 
     setSelectedProduct("")
-    setQuantity(1)
+    setQuantity("1")
   }
 
   const handleRemoveFromCart = (productId: string) => {
     setCart(cart.filter((item) => item.product_id !== productId))
   }
 
+  const handleUpdateQuantity = (productId: string, newQuantity: string) => {
+    const qty = Number.parseInt(newQuantity) || 0
+    if (qty <= 0) return
+
+    setCart(
+      cart.map((item) =>
+        item.product_id === productId
+          ? {
+              ...item,
+              quantity: qty,
+              subtotal: qty * item.unit_price,
+            }
+          : item,
+      ),
+    )
+  }
+
+  const resetForm = () => {
+    setCart([])
+    setSelectedCustomer("")
+    setPaymentType("cash")
+    setNotes("")
+    setFirstDueDate("")
+    setQuantity("1")
+    setSelectedProduct("")
+    setInstallmentCount(3)
+  }
+
   const handleCreateSale = async () => {
+    if (!selectedCustomer) {
+      setNotification({
+        open: true,
+        type: "error",
+        title: "Customer Required",
+        content: "Please select a customer before creating a sale",
+      })
+      return
+    }
+
     if (cart.length === 0) {
-      toast({
-        title: "Cart is empty",
-        description: "Add products to cart before creating a sale",
-        variant: "destructive",
+      setNotification({
+        open: true,
+        type: "error",
+        title: "Cart is Empty",
+        content: "Please add at least one product to the cart",
       })
       return
     }
 
     if (paymentType === "credit" && !firstDueDate) {
-      toast({
-        title: "Missing due date",
-        description: "Please set the first installment due date",
-        variant: "destructive",
+      setNotification({
+        open: true,
+        type: "error",
+        title: "Missing Due Date",
+        content: "Please set the first installment due date for credit sales",
       })
       return
     }
@@ -200,7 +274,7 @@ export default function SalesHistoryPage() {
 
     try {
       const { data, error } = await createSale({
-        customer_id: selectedCustomer || undefined,
+        customer_id: selectedCustomer,
         items: cart,
         payment_type: paymentType,
         notes,
@@ -215,23 +289,22 @@ export default function SalesHistoryPage() {
 
       if (error) throw new Error(error)
 
-      toast({
-        title: "Sale created!",
-        description: `Sale has been recorded successfully`,
+      setNotification({
+        open: true,
+        type: "success",
+        title: "Sale Created Successfully!",
+        content: `Sale has been recorded with ${cart.length} item(s) for $${totalAmount.toFixed(2)}`,
       })
 
       // Reset form
-      setCart([])
-      setSelectedCustomer("none")
-      setPaymentType("cash")
-      setNotes("")
-      setFirstDueDate("")
+      resetForm()
       setIsCreateDialogOpen(false)
     } catch (err: any) {
-      toast({
-        title: "Error creating sale",
-        description: err.message || "Failed to create sale",
-        variant: "destructive",
+      setNotification({
+        open: true,
+        type: "error",
+        title: "Failed to Create Sale",
+        content: err.message || "An error occurred while creating the sale. Please try again.",
       })
     } finally {
       setIsCreating(false)
@@ -265,17 +338,19 @@ export default function SalesHistoryPage() {
     setShareModalOpen(true)
   }
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      toast({
-        title: "Link copied!",
-        description: "Invoice link has been copied to clipboard",
-      })
-    })
-  }
+  const isCustomerSelected = selectedCustomer && selectedCustomer !== ""
+  const selectedCustomerData = customers.find((c) => c.id === selectedCustomer)
 
   return (
     <div className="p-4 sm:p-6 md:p-8">
+      <Notification
+        open={notification.open}
+        onClose={() => setNotification({ ...notification, open: false })}
+        type={notification.type}
+        title={notification.title}
+        content={notification.content}
+      />
+
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
@@ -287,115 +362,287 @@ export default function SalesHistoryPage() {
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <InstallmentHelpDialog />
 
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <Dialog
+              open={isCreateDialogOpen}
+              onOpenChange={(open) => {
+                setIsCreateDialogOpen(open)
+                if (!open) {
+                  resetForm()
+                }
+              }}
+            >
               <DialogTrigger asChild>
                 <Button className="bg-neutral-900 hover:bg-neutral-800 w-full sm:w-auto">
                   <Plus className="w-4 h-4 mr-2" />
                   New Sale
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
+              <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
                 <DialogHeader>
-                  <DialogTitle>Create New Sale</DialogTitle>
-                  <DialogDescription>Add products and complete the sale</DialogDescription>
-                </DialogHeader>
-                <div className="flex-1 overflow-y-auto px-1">
-                  <div className="grid gap-4 py-4">
-                    {/* Customer Selection */}
-                    <div className="grid gap-2">
-                      <Label>Customer (Optional)</Label>
-                      <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select customer" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Walk-in Customer</SelectItem>
-                          {customers.map((customer) => (
-                            <SelectItem key={customer.id} value={customer.id}>
-                              {customer.name} - {customer.email}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <DialogTitle>Create New Sale</DialogTitle>
+                      <DialogDescription>Add products and complete the sale</DialogDescription>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowTutorial(true)}
+                      className="gap-2 bg-white/10 backdrop-blur-sm hover:bg-white/20"
+                    >
+                      <HelpCircle className="w-4 h-4" />
+                      <span>Tutorial</span>
+                    </Button>
+                  </div>
+                </DialogHeader>
 
-                    {/* Product Selection */}
-                    <div className="border rounded-lg p-4 bg-neutral-50">
-                      <h3 className="font-semibold mb-3">Add Products</h3>
-                      <div className="grid grid-cols-[1fr_100px_auto] gap-2">
+                <div className="flex-1 overflow-y-auto px-1">
+                  <div className="grid gap-6 py-4">
+                    <motion.div
+                      className="grid gap-2 relative"
+                      animate={{
+                        boxShadow: !isCustomerSelected
+                          ? "0 0 0 3px rgba(59, 130, 246, 0.3)"
+                          : "0 0 0 0px rgba(59, 130, 246, 0)",
+                      }}
+                      transition={{ duration: 0.3 }}
+                      style={{
+                        borderRadius: "0.5rem",
+                        padding: "1rem",
+                        backgroundColor: "rgba(255, 255, 255, 0.5)",
+                      }}
+                    >
+                      <Label className="flex items-center gap-2 text-base font-semibold">
+                        <div className="relative w-8 h-8 flex items-center justify-center">
+                          <div className="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-lg" />
+                          <div className="absolute inset-0 bg-black rounded-lg" />
+                          <User className="w-5 h-5 relative z-10 text-white" />
+                        </div>
+                        Customer <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="grid gap-3">
+                        <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
+                          <SelectTrigger className="h-12 w-full">
+                            <SelectValue placeholder="Select a customer..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {customers.map((customer) => (
+                              <SelectItem key={customer.id} value={customer.id}>
+                                <div className="flex items-center gap-2">
+                                  <User className="w-4 h-4 text-neutral-500" />
+                                  <div>
+                                    <p className="font-medium">{customer.name}</p>
+                                    <p className="text-xs text-neutral-500">{customer.email || customer.phone}</p>
+                                  </div>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <AnimatePresence>
+                          {isCustomerSelected && selectedCustomerData && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              transition={{ duration: 0.3, ease: "easeOut" }}
+                              className="p-4 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 shadow-lg"
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-black to-white/20 flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
+                                  {selectedCustomerData.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <p className="font-semibold text-base">{selectedCustomerData.name}</p>
+                                    <Badge
+                                      className={`text-xs ${
+                                        selectedCustomerData.customer_type === "vip"
+                                          ? "bg-gradient-to-r from-yellow-400 to-yellow-600 text-black"
+                                          : selectedCustomerData.customer_type === "wholesale"
+                                            ? "bg-blue-500 text-white"
+                                            : "bg-gray-400 text-white"
+                                      }`}
+                                    >
+                                      {selectedCustomerData.customer_type?.toUpperCase() || "REGULAR"}
+                                    </Badge>
+                                  </div>
+                                  {selectedCustomerData.email && (
+                                    <p className="text-sm text-neutral-600 truncate">{selectedCustomerData.email}</p>
+                                  )}
+                                  {selectedCustomerData.phone && (
+                                    <p className="text-sm text-neutral-600">{selectedCustomerData.phone}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </motion.div>
+
+                    <div className="border-2 border-dashed border-neutral-300 rounded-lg p-4 bg-neutral-50">
+                      <h3 className="font-semibold mb-3 flex items-center gap-2">
+                        <div className="relative w-8 h-8 flex items-center justify-center">
+                          <div className="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-lg" />
+                          <div className="absolute inset-0 bg-black rounded-lg" />
+                          <Package className="w-5 h-5 relative z-10 text-white" />
+                        </div>
+                        Add Products
+                      </h3>
+                      <div className="grid grid-cols-[1fr_120px_auto] gap-2">
                         <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select product" />
+                            <SelectValue placeholder="Select product..." />
                           </SelectTrigger>
                           <SelectContent>
                             {products.map((product) => (
                               <SelectItem key={product.id} value={product.id}>
-                                {product.name} - ${product.price} (Stock: {product.stock_quantity})
+                                <div className="flex items-center gap-3">
+                                  {product.image_url ? (
+                                    <img
+                                      src={product.image_url || "/placeholder.svg"}
+                                      alt={product.name}
+                                      className="w-8 h-8 rounded object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded bg-gradient-to-br from-black to-white flex items-center justify-center">
+                                      <ImageIcon className="w-4 h-4 text-white" />
+                                    </div>
+                                  )}
+                                  <div>
+                                    <p className="font-medium">{product.name}</p>
+                                    <p className="text-xs text-neutral-500">
+                                      ${product.price} • Stock: {product.stock_quantity}
+                                    </p>
+                                  </div>
+                                </div>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                         <Input
                           type="number"
-                          min="1"
+                          min="0"
                           value={quantity}
-                          onChange={(e) => setQuantity(Number.parseInt(e.target.value) || 1)}
+                          onChange={(e) => setQuantity(e.target.value)}
                           placeholder="Qty"
+                          className="h-10"
                         />
-                        <Button type="button" onClick={handleAddToCart} disabled={!selectedProduct}>
+                        <Button
+                          type="button"
+                          onClick={handleAddToCart}
+                          disabled={!selectedProduct || !quantity || Number.parseInt(quantity) <= 0}
+                          className="h-10 bg-neutral-900 hover:bg-neutral-800"
+                        >
                           <Plus className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
 
-                    {/* Cart */}
-                    {cart.length > 0 && (
-                      <div className="border rounded-lg p-4">
-                        <h3 className="font-semibold mb-3">Cart Items</h3>
-                        <div className="space-y-2">
-                          {cart.map((item) => (
-                            <div
-                              key={item.product_id}
-                              className="flex items-center justify-between p-2 bg-neutral-50 rounded"
-                            >
-                              <div className="flex-1">
-                                <p className="font-medium text-sm">{item.product_name}</p>
-                                <p className="text-xs text-neutral-600">
-                                  {item.quantity} x ${item.unit_price.toFixed(2)}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <p className="font-semibold">${item.subtotal.toFixed(2)}</p>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveFromCart(item.product_id)}
-                                  className="p-1 hover:bg-red-100 rounded text-red-600"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
+                    <AnimatePresence>
+                      {cart.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="border rounded-lg p-4 bg-white shadow-sm"
+                        >
+                          <h3 className="font-semibold mb-3 flex items-center gap-2">
+                            <ShoppingCart className="w-5 h-5 text-green-600" />
+                            Cart Items ({cart.length})
+                          </h3>
+                          <div className="space-y-2">
+                            {cart.map((item) => (
+                              <motion.div
+                                key={item.product_id}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                className="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg"
+                              >
+                                {item.product_image ? (
+                                  <img
+                                    src={item.product_image || "/placeholder.svg"}
+                                    alt={item.product_name}
+                                    className="w-12 h-12 rounded object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 rounded bg-gradient-to-br from-black to-neutral-600 flex items-center justify-center flex-shrink-0">
+                                    <ImageIcon className="w-6 h-6 text-white" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm truncate">{item.product_name}</p>
+                                  <p className="text-xs text-neutral-600">${item.unit_price.toFixed(2)} each</p>
+                                </div>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={item.quantity}
+                                  onChange={(e) => handleUpdateQuantity(item.product_id, e.target.value)}
+                                  className="w-20 h-9"
+                                />
+                                <div className="flex items-center gap-3">
+                                  <p className="font-semibold text-sm whitespace-nowrap">${item.subtotal.toFixed(2)}</p>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveFromCart(item.product_id)}
+                                    className="p-1.5 hover:bg-red-100 rounded-lg text-red-600 transition-colors"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </motion.div>
+                            ))}
+                            <div className="flex justify-between items-center pt-3 border-t-2 border-neutral-200 font-bold text-lg">
+                              <span>Total:</span>
+                              <span className="text-green-600">${totalAmount.toFixed(2)}</span>
                             </div>
-                          ))}
-                          <div className="flex justify-between items-center pt-2 border-t font-bold text-lg">
-                            <span>Total:</span>
-                            <span>${totalAmount.toFixed(2)}</span>
                           </div>
-                        </div>
-                      </div>
-                    )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
-                    {/* Payment Method */}
                     <div className="grid gap-2">
-                      <Label>Payment Method</Label>
+                      <Label className="flex items-center gap-2 text-base font-semibold">
+                        <div className="relative w-8 h-8 flex items-center justify-center">
+                          <div className="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-lg" />
+                          <div className="absolute inset-0 bg-black rounded-lg" />
+                          <CreditCard className="w-5 h-5 relative z-10 text-white" />
+                        </div>
+                        Payment Method
+                      </Label>
                       <Select value={paymentType} onValueChange={(value: any) => setPaymentType(value)}>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-12">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="cash">Cash</SelectItem>
-                          <SelectItem value="credit">Credit (Installments)</SelectItem>
-                          <SelectItem value="debit">Debit Card</SelectItem>
-                          <SelectItem value="transfer">Bank Transfer</SelectItem>
+                          <SelectItem value="cash">
+                            <div className="flex items-center gap-2">
+                              <Wallet className="w-4 h-4 text-green-600" />
+                              <span>Cash</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="credit">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-blue-600" />
+                              <span>Credit (Installments)</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="debit" disabled>
+                            <div className="flex items-center gap-2">
+                              <CreditCard className="w-4 h-4 text-purple-400" />
+                              <span className="text-neutral-400">Debit Card (Coming Soon)</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="transfer" disabled>
+                            <div className="flex items-center gap-2">
+                              <DollarSign className="w-4 h-4 text-orange-400" />
+                              <span className="text-neutral-400">Bank Transfer (Coming Soon)</span>
+                            </div>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -447,7 +694,10 @@ export default function SalesHistoryPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setIsCreateDialogOpen(false)}
+                    onClick={() => {
+                      resetForm()
+                      setIsCreateDialogOpen(false)
+                    }}
                     disabled={isCreating}
                   >
                     Cancel
@@ -455,7 +705,7 @@ export default function SalesHistoryPage() {
                   <Button
                     onClick={handleCreateSale}
                     className="bg-neutral-900 hover:bg-neutral-800"
-                    disabled={isCreating || cart.length === 0}
+                    disabled={isCreating || cart.length === 0 || !selectedCustomer}
                   >
                     {isCreating ? (
                       <>
@@ -463,9 +713,85 @@ export default function SalesHistoryPage() {
                         Creating...
                       </>
                     ) : (
-                      "Complete Sale"
+                      <>
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        Complete Sale
+                      </>
                     )}
                   </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={showTutorial} onOpenChange={setShowTutorial}>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-3">
+                    <div className="relative w-10 h-10 flex items-center justify-center">
+                      <div className="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-full" />
+                      <div className="absolute inset-0 bg-black rounded-full" />
+                      <HelpCircle className="w-5 h-5 relative z-10 text-white" />
+                    </div>
+                    How to Create a Sale
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-black to-neutral-700 flex items-center justify-center text-white font-semibold shadow-lg">
+                      1
+                    </div>
+                    <div className="flex-1 p-3 rounded-lg bg-neutral-50 relative overflow-hidden">
+                      <h4 className="font-semibold mb-1 flex items-center gap-2">
+                        <User className="w-5 h-5 text-neutral-900" />
+                        Select Customer
+                      </h4>
+                      <p className="text-sm text-neutral-600">
+                        Choose a customer from your list. This field is required.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-black to-neutral-700 flex items-center justify-center text-white font-semibold shadow-lg">
+                      2
+                    </div>
+                    <div className="flex-1 p-3 rounded-lg bg-neutral-50 relative overflow-hidden">
+                      <h4 className="font-semibold mb-1 flex items-center gap-2">
+                        <Package className="w-5 h-5 text-neutral-900" />
+                        Add Products
+                      </h4>
+                      <p className="text-sm text-neutral-600">
+                        Select products, set quantities, and add them to your cart. You can edit quantities in the cart.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-black to-neutral-700 flex items-center justify-center text-white font-semibold shadow-lg">
+                      3
+                    </div>
+                    <div className="flex-1 p-3 rounded-lg bg-neutral-50 relative overflow-hidden">
+                      <h4 className="font-semibold mb-1 flex items-center gap-2">
+                        <CreditCard className="w-5 h-5 text-neutral-900" />
+                        Choose Payment Method
+                      </h4>
+                      <p className="text-sm text-neutral-600">
+                        Select how the customer will pay. For credit sales, set installment details.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-black to-neutral-700 flex items-center justify-center text-white font-semibold shadow-lg">
+                      4
+                    </div>
+                    <div className="flex-1 p-3 rounded-lg bg-neutral-50 relative overflow-hidden">
+                      <h4 className="font-semibold mb-1 flex items-center gap-2">
+                        <ShoppingCart className="w-5 h-5 text-neutral-900" />
+                        Complete Sale
+                      </h4>
+                      <p className="text-sm text-neutral-600">
+                        Review your cart and click "Complete Sale" to finalize the transaction.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </DialogContent>
             </Dialog>

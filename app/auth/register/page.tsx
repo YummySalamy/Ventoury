@@ -64,7 +64,7 @@ export default function RegisterPage() {
           options: {
             data: {
               name: formData.name,
-              company: formData.company,
+              business_name: formData.company,
             },
             emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/app`,
           },
