@@ -48,8 +48,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useTranslation } from "@/hooks/useTranslation"
 
 export default function CustomersListPage() {
+  const { t } = useTranslation()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
@@ -135,10 +137,10 @@ export default function CustomersListPage() {
 
   const validateForm = (): string | null => {
     if (!formData.name.trim()) {
-      return "Name is required"
+      return t("customers.validation.nameRequired")
     }
     if (!formData.email.trim() && !formData.phone.trim()) {
-      return "At least email or phone is required"
+      return t("customers.validation.contactRequired")
     }
     return null
   }
@@ -184,7 +186,7 @@ export default function CustomersListPage() {
     const validationError = validateForm()
     if (validationError) {
       toast({
-        title: "Validation Error",
+        title: t("customers.validation.error"),
         description: validationError,
         variant: "destructive",
       })
@@ -213,15 +215,15 @@ export default function CustomersListPage() {
         const { error } = await updateCustomer(editingCustomer.id, customerData)
         if (error) throw new Error(error)
         toast({
-          title: "Customer updated!",
-          description: `${formData.name} has been updated.`,
+          title: t("customers.updated"),
+          description: `${formData.name} ${t("customers.hasBeenUpdated")}`,
         })
       } else {
         const { error } = await createCustomer(customerData)
         if (error) throw new Error(error)
         toast({
-          title: "Customer created!",
-          description: `${formData.name} has been added.`,
+          title: t("customers.created"),
+          description: `${formData.name} ${t("customers.hasBeenAdded")}`,
         })
       }
 
@@ -230,8 +232,8 @@ export default function CustomersListPage() {
       loadDashboardStats()
     } catch (err: any) {
       toast({
-        title: "Error",
-        description: err.message || `Failed to ${editingCustomer ? "update" : "create"} customer`,
+        title: t("common.error"),
+        description: err.message || t("customers.failedToSave"),
         variant: "destructive",
       })
     } finally {
@@ -247,14 +249,14 @@ export default function CustomersListPage() {
       if (error) throw new Error(error)
 
       toast({
-        title: "Customer deleted",
-        description: `${deleteConfirm.name} has been removed.`,
+        title: t("customers.deleted"),
+        description: `${deleteConfirm.name} ${t("customers.hasBeenRemoved")}`,
       })
       loadDashboardStats()
     } catch (err: any) {
       toast({
-        title: "Error",
-        description: err.message || "Failed to delete customer",
+        title: t("common.error"),
+        description: err.message || t("customers.failedToDelete"),
         variant: "destructive",
       })
     } finally {
@@ -265,13 +267,21 @@ export default function CustomersListPage() {
   const getCustomerTypeBadge = (type: string) => {
     switch (type) {
       case "vip":
-        return <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-0">VIP</Badge>
+        return (
+          <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-0">
+            {t("customers.types.vip")}
+          </Badge>
+        )
       case "wholesale":
-        return <Badge className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white border-0">Wholesale</Badge>
+        return (
+          <Badge className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white border-0">
+            {t("customers.types.wholesale")}
+          </Badge>
+        )
       default:
         return (
           <Badge variant="secondary" className="bg-neutral-200 text-neutral-700">
-            Regular
+            {t("customers.types.regular")}
           </Badge>
         )
     }
@@ -293,9 +303,10 @@ export default function CustomersListPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-900">
-              Customers <span className="italic font-light text-neutral-600">Directory</span>
+              {t("customers.title")}{" "}
+              <span className="italic font-light text-neutral-600">{t("customers.subtitle")}</span>
             </h1>
-            <p className="text-sm sm:text-base text-neutral-600 mt-2">Manage your customer relationships and data</p>
+            <p className="text-sm sm:text-base text-neutral-600 mt-2">{t("customers.description")}</p>
           </div>
 
           <div className="flex gap-2">
@@ -307,7 +318,7 @@ export default function CustomersListPage() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>View tutorial</p>
+                  <p>{t("customers.viewTutorial")}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -322,13 +333,13 @@ export default function CustomersListPage() {
               <DialogTrigger asChild>
                 <Button className="bg-neutral-900 hover:bg-neutral-800 w-full sm:w-auto">
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Customer
+                  {t("customers.addCustomer")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto backdrop-blur-xl bg-white/95 border border-neutral-200/50">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    {editingCustomer ? "Edit Customer" : "Add New Customer"}
+                    {editingCustomer ? t("customers.editCustomer") : t("customers.addNewCustomer")}
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -337,37 +348,37 @@ export default function CustomersListPage() {
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>View field descriptions</p>
+                          <p>{t("customers.viewFieldDescriptions")}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </DialogTitle>
                   <DialogDescription>
-                    {editingCustomer ? "Update customer information" : "Create a new customer profile"}. Fields marked
-                    with * are required.
+                    {editingCustomer ? t("customers.updateCustomerInfo") : t("customers.createNewProfile")}.{" "}
+                    {t("customers.fieldsRequired")}
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
                   <div className="grid gap-4 py-4">
                     <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-50/50 border border-blue-200/50 backdrop-blur-sm">
                       <AlertCircle className="w-4 h-4 text-blue-600" />
-                      <p className="text-xs text-blue-700">At least email or phone is required</p>
+                      <p className="text-xs text-blue-700">{t("customers.contactRequirement")}</p>
                     </div>
 
                     {/* Basic Information */}
                     <div className="space-y-4">
                       <h3 className="font-semibold text-sm flex items-center gap-2">
                         <Users className="w-4 h-4" />
-                        Basic Information
+                        {t("customers.basicInfo")}
                       </h3>
 
                       <div className="grid gap-2">
                         <Label htmlFor="customerName" className="flex items-center gap-1">
-                          Full Name <span className="text-red-500">*</span>
+                          {t("customers.fullName")} <span className="text-red-500">*</span>
                         </Label>
                         <Input
                           id="customerName"
-                          placeholder="Enter customer name"
+                          placeholder={t("customers.enterName")}
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           required
@@ -378,7 +389,7 @@ export default function CustomersListPage() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                           <Label htmlFor="customerType" className="flex items-center gap-1">
-                            Customer Type <span className="text-red-500">*</span>
+                            {t("customers.customerType")} <span className="text-red-500">*</span>
                           </Label>
                           <Select
                             value={formData.customer_type}
@@ -390,18 +401,18 @@ export default function CustomersListPage() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="regular">Regular</SelectItem>
-                              <SelectItem value="vip">VIP</SelectItem>
-                              <SelectItem value="wholesale">Wholesale</SelectItem>
+                              <SelectItem value="regular">{t("customers.types.regular")}</SelectItem>
+                              <SelectItem value="vip">{t("customers.types.vip")}</SelectItem>
+                              <SelectItem value="wholesale">{t("customers.types.wholesale")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
 
                         <div className="grid gap-2">
-                          <Label htmlFor="taxId">Tax ID</Label>
+                          <Label htmlFor="taxId">{t("customers.taxId")}</Label>
                           <Input
                             id="taxId"
-                            placeholder="Tax ID number"
+                            placeholder={t("customers.taxIdPlaceholder")}
                             value={formData.tax_id}
                             onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
                             className="backdrop-blur-sm bg-white/50"
@@ -410,7 +421,7 @@ export default function CustomersListPage() {
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                        <Label htmlFor="dateOfBirth">{t("customers.dateOfBirth")}</Label>
                         <Input
                           id="dateOfBirth"
                           type="date"
@@ -425,15 +436,15 @@ export default function CustomersListPage() {
                     <div className="space-y-4 pt-4 border-t border-neutral-200/50">
                       <h3 className="font-semibold text-sm flex items-center gap-2">
                         <Mail className="w-4 h-4" />
-                        Contact Information
+                        {t("customers.contactInfo")}
                       </h3>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="customerEmail">Email Address</Label>
+                        <Label htmlFor="customerEmail">{t("customers.emailAddress")}</Label>
                         <Input
                           id="customerEmail"
                           type="email"
-                          placeholder="customer@example.com"
+                          placeholder={t("customers.emailPlaceholder")}
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           className="backdrop-blur-sm bg-white/50"
@@ -441,10 +452,10 @@ export default function CustomersListPage() {
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="customerPhone">Phone Number</Label>
+                        <Label htmlFor="customerPhone">{t("customers.phoneNumber")}</Label>
                         <Input
                           id="customerPhone"
-                          placeholder="+1 234 567 8900"
+                          placeholder={t("customers.phonePlaceholder")}
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                           className="backdrop-blur-sm bg-white/50"
@@ -452,11 +463,11 @@ export default function CustomersListPage() {
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="customerAddress">Address</Label>
+                        <Label htmlFor="customerAddress">{t("customers.address")}</Label>
                         <textarea
                           id="customerAddress"
                           className="flex min-h-[80px] w-full rounded-md border border-input backdrop-blur-sm bg-white/50 px-3 py-2 text-sm"
-                          placeholder="Customer address"
+                          placeholder={t("customers.addressPlaceholder")}
                           value={formData.address}
                           onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                         />
@@ -467,19 +478,19 @@ export default function CustomersListPage() {
                     <div className="space-y-4 pt-4 border-t border-neutral-200/50">
                       <h3 className="font-semibold text-sm flex items-center gap-2">
                         <DollarSign className="w-4 h-4" />
-                        Financial Settings
+                        {t("customers.financialSettings")}
                       </h3>
 
                       <div className="grid gap-2">
                         <Label htmlFor="creditLimit" className="flex items-center gap-2">
-                          Credit Limit
+                          {t("customers.creditLimit")}
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Info className="w-3 h-3 text-neutral-400" />
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p className="max-w-xs">Maximum debt allowed for this customer</p>
+                                <p className="max-w-xs">{t("customers.creditLimitTooltip")}</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -498,18 +509,14 @@ export default function CustomersListPage() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                           <Label htmlFor="discountType" className="flex items-center gap-2">
-                            Discount Type
+                            {t("customers.discountType")}
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Info className="w-3 h-3 text-neutral-400" />
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p className="max-w-xs">
-                                    Percentage: Customer gets X% off
-                                    <br />
-                                    Fixed: Customer gets $X off
-                                  </p>
+                                  <p className="max-w-xs">{t("customers.discountTypeTooltip")}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -524,16 +531,16 @@ export default function CustomersListPage() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">None</SelectItem>
-                              <SelectItem value="percentage">Percentage (%)</SelectItem>
-                              <SelectItem value="fixed">Fixed Amount ($)</SelectItem>
+                              <SelectItem value="none">{t("customers.discountTypes.none")}</SelectItem>
+                              <SelectItem value="percentage">{t("customers.discountTypes.percentage")}</SelectItem>
+                              <SelectItem value="fixed">{t("customers.discountTypes.fixed")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
 
                         <div className="grid gap-2">
                           <Label htmlFor="discountValue">
-                            Discount {formData.discount_type === "percentage" ? "%" : "$"}
+                            {t("customers.discount")} {formData.discount_type === "percentage" ? "%" : "$"}
                           </Label>
                           <Input
                             id="discountValue"
@@ -551,11 +558,11 @@ export default function CustomersListPage() {
 
                     {/* Notes */}
                     <div className="grid gap-2 pt-4 border-t border-neutral-200/50">
-                      <Label htmlFor="notes">Notes</Label>
+                      <Label htmlFor="notes">{t("customers.notes")}</Label>
                       <textarea
                         id="notes"
                         className="flex min-h-[60px] w-full rounded-md border border-input backdrop-blur-sm bg-white/50 px-3 py-2 text-sm"
-                        placeholder="Additional notes about this customer"
+                        placeholder={t("customers.notesPlaceholder")}
                         value={formData.notes}
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                       />
@@ -572,16 +579,16 @@ export default function CustomersListPage() {
                       }}
                       disabled={isCreating}
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </Button>
                     <Button type="submit" className="bg-neutral-900 hover:bg-neutral-800" disabled={isCreating}>
                       {isCreating ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          {editingCustomer ? "Updating..." : "Creating..."}
+                          {editingCustomer ? t("customers.updating") : t("customers.creating")}
                         </>
                       ) : (
-                        <>{editingCustomer ? "Update Customer" : "Create Customer"}</>
+                        <>{editingCustomer ? t("customers.updateCustomer") : t("customers.createCustomer")}</>
                       )}
                     </Button>
                   </div>
@@ -598,7 +605,7 @@ export default function CustomersListPage() {
                 <Users className="w-6 h-6 text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm sm:text-base text-neutral-600">Total Customers</p>
+                <p className="text-sm sm:text-base text-neutral-600">{t("customers.stats.totalCustomers")}</p>
                 <p className="text-2xl sm:text-3xl font-bold text-neutral-900 truncate">
                   {dashboardStats.total_customers}
                 </p>
@@ -611,7 +618,7 @@ export default function CustomersListPage() {
                 <DollarSign className="w-6 h-6 text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm sm:text-base text-neutral-600">Total Revenue</p>
+                <p className="text-sm sm:text-base text-neutral-600">{t("customers.stats.totalRevenue")}</p>
                 <p className="text-2xl sm:text-3xl font-bold text-neutral-900 truncate">
                   ${formatNumber(dashboardStats.total_revenue)}
                 </p>
@@ -624,7 +631,7 @@ export default function CustomersListPage() {
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm sm:text-base text-neutral-600">Avg. Customer Value</p>
+                <p className="text-sm sm:text-base text-neutral-600">{t("customers.stats.avgCustomerValue")}</p>
                 <p className="text-2xl sm:text-3xl font-bold text-neutral-900 truncate">
                   ${formatNumber(dashboardStats.avg_customer_value)}
                 </p>
@@ -638,7 +645,7 @@ export default function CustomersListPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
               <Input
-                placeholder="Search customers by name, email, or phone..."
+                placeholder={t("customers.searchPlaceholder")}
                 className="pl-10 backdrop-blur-sm bg-white/50 border-0"
                 value={searchTerm}
                 onChange={(e) => {
@@ -672,7 +679,7 @@ export default function CustomersListPage() {
           <GlassCard>
             <div className="text-center py-12">
               <div className="w-12 h-12 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-neutral-600">Loading customers...</p>
+              <p className="text-neutral-600">{t("customers.loading")}</p>
             </div>
           </GlassCard>
         )}
@@ -680,7 +687,9 @@ export default function CustomersListPage() {
         {error && (
           <GlassCard>
             <div className="text-center py-12">
-              <p className="text-red-600">Error: {error}</p>
+              <p className="text-red-600">
+                {t("common.error")}: {error}
+              </p>
             </div>
           </GlassCard>
         )}
@@ -693,9 +702,7 @@ export default function CustomersListPage() {
                   <div className="col-span-full">
                     <GlassCard>
                       <div className="text-center py-12 text-neutral-600">
-                        {searchTerm
-                          ? "No customers found matching your search"
-                          : "No customers yet. Create your first customer to get started!"}
+                        {searchTerm ? t("customers.noResults") : t("customers.noCustomers")}
                       </div>
                     </GlassCard>
                   </div>
@@ -734,13 +741,13 @@ export default function CustomersListPage() {
 
                           <div className="flex items-center justify-between pt-4 border-t border-neutral-200">
                             <div>
-                              <p className="text-xs sm:text-sm text-neutral-600">Orders</p>
+                              <p className="text-xs sm:text-sm text-neutral-600">{t("customers.orders")}</p>
                               <p className="text-xl sm:text-2xl font-bold text-neutral-900">
                                 {customer.stats?.total_purchases || 0}
                               </p>
                             </div>
                             <div className="text-right">
-                              <p className="text-xs sm:text-sm text-neutral-600">Total Spent</p>
+                              <p className="text-xs sm:text-sm text-neutral-600">{t("customers.totalSpent")}</p>
                               <p className="text-xl sm:text-2xl font-bold text-neutral-900">
                                 ${(customer.stats?.total_spent || 0).toFixed(2)}
                               </p>
@@ -762,7 +769,7 @@ export default function CustomersListPage() {
                                   </button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>View Details</p>
+                                  <p>{t("customers.viewDetails")}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -778,7 +785,7 @@ export default function CustomersListPage() {
                                   </button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Edit Customer</p>
+                                  <p>{t("customers.editCustomer")}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -794,7 +801,7 @@ export default function CustomersListPage() {
                                   </button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Delete Customer</p>
+                                  <p>{t("customers.deleteCustomer")}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -811,21 +818,27 @@ export default function CustomersListPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-neutral-200">
-                        <th className="text-left p-4 text-sm font-semibold text-neutral-700">Name</th>
-                        <th className="text-left p-4 text-sm font-semibold text-neutral-700">Type</th>
-                        <th className="text-left p-4 text-sm font-semibold text-neutral-700">Contact</th>
-                        <th className="text-right p-4 text-sm font-semibold text-neutral-700">Orders</th>
-                        <th className="text-right p-4 text-sm font-semibold text-neutral-700">Total Spent</th>
-                        <th className="text-right p-4 text-sm font-semibold text-neutral-700">Actions</th>
+                        <th className="text-left p-4 text-sm font-semibold text-neutral-700">{t("customers.name")}</th>
+                        <th className="text-left p-4 text-sm font-semibold text-neutral-700">{t("customers.type")}</th>
+                        <th className="text-left p-4 text-sm font-semibold text-neutral-700">
+                          {t("customers.contact")}
+                        </th>
+                        <th className="text-right p-4 text-sm font-semibold text-neutral-700">
+                          {t("customers.orders")}
+                        </th>
+                        <th className="text-right p-4 text-sm font-semibold text-neutral-700">
+                          {t("customers.totalSpent")}
+                        </th>
+                        <th className="text-right p-4 text-sm font-semibold text-neutral-700">
+                          {t("customers.actions")}
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {customers.length === 0 ? (
                         <tr>
                           <td colSpan={6} className="text-center py-12 text-neutral-600">
-                            {searchTerm
-                              ? "No customers found matching your search"
-                              : "No customers yet. Create your first customer to get started!"}
+                            {searchTerm ? t("customers.noResults") : t("customers.noCustomers")}
                           </td>
                         </tr>
                       ) : (
@@ -907,23 +920,23 @@ export default function CustomersListPage() {
       <Dialog open={showTutorial} onOpenChange={setShowTutorial}>
         <DialogContent className="sm:max-w-[600px] backdrop-blur-xl bg-white/95 border border-neutral-200/50">
           <DialogHeader>
-            <DialogTitle>Customer Management Tutorial</DialogTitle>
+            <DialogTitle>{t("customers.tutorial.title")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <h4 className="font-semibold flex items-center gap-2">
                 <Users className="w-4 h-4" />
-                Customer Types
+                {t("customers.tutorial.typesTitle")}
               </h4>
               <ul className="text-sm text-neutral-600 space-y-1 ml-6 list-disc">
                 <li>
-                  <strong>Regular:</strong> Standard customers
+                  <strong>{t("customers.types.regular")}:</strong> {t("customers.tutorial.regularDesc")}
                 </li>
                 <li>
-                  <strong>VIP:</strong> Premium customers with special privileges
+                  <strong>{t("customers.types.vip")}:</strong> {t("customers.tutorial.vipDesc")}
                 </li>
                 <li>
-                  <strong>Wholesale:</strong> Bulk buyers with special pricing
+                  <strong>{t("customers.types.wholesale")}:</strong> {t("customers.tutorial.wholesaleDesc")}
                 </li>
               </ul>
             </div>
@@ -931,17 +944,17 @@ export default function CustomersListPage() {
             <div className="space-y-2">
               <h4 className="font-semibold flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
-                Discount Settings
+                {t("customers.tutorial.discountTitle")}
               </h4>
               <ul className="text-sm text-neutral-600 space-y-1 ml-6 list-disc">
                 <li>
-                  <strong>None:</strong> No discount applied
+                  <strong>{t("customers.discountTypes.none")}:</strong> {t("customers.tutorial.noneDesc")}
                 </li>
                 <li>
-                  <strong>Percentage:</strong> Customer gets X% off on all purchases
+                  <strong>{t("customers.discountTypes.percentage")}:</strong> {t("customers.tutorial.percentageDesc")}
                 </li>
                 <li>
-                  <strong>Fixed:</strong> Customer gets $X off on all purchases
+                  <strong>{t("customers.discountTypes.fixed")}:</strong> {t("customers.tutorial.fixedDesc")}
                 </li>
               </ul>
             </div>
@@ -949,24 +962,22 @@ export default function CustomersListPage() {
             <div className="space-y-2">
               <h4 className="font-semibold flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" />
-                Credit Limit
+                {t("customers.tutorial.creditTitle")}
               </h4>
-              <p className="text-sm text-neutral-600 ml-6">
-                Maximum debt allowed for this customer. The system will warn you when approaching the limit.
-              </p>
+              <p className="text-sm text-neutral-600 ml-6">{t("customers.tutorial.creditDesc")}</p>
             </div>
 
             <div className="space-y-2">
               <h4 className="font-semibold flex items-center gap-2">
                 <AlertCircle className="w-4 h-4" />
-                Required Fields
+                {t("customers.tutorial.requiredTitle")}
               </h4>
               <ul className="text-sm text-neutral-600 space-y-1 ml-6 list-disc">
                 <li>
-                  <strong>Name:</strong> Always required
+                  <strong>{t("customers.fullName")}:</strong> {t("customers.tutorial.nameRequired")}
                 </li>
                 <li>
-                  <strong>Email or Phone:</strong> At least one is required for contact
+                  <strong>{t("customers.tutorial.emailOrPhone")}:</strong> {t("customers.tutorial.contactRequired")}
                 </li>
               </ul>
             </div>
@@ -977,15 +988,15 @@ export default function CustomersListPage() {
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Customer</AlertDialogTitle>
+            <AlertDialogTitle>{t("customers.deleteCustomer")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <strong>{deleteConfirm?.name}</strong>? This action cannot be undone.
+              {t("customers.deleteConfirm")} <strong>{deleteConfirm?.name}</strong>? {t("customers.deleteWarning")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700 focus:ring-red-600">
-              Delete
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

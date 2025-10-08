@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { ShareInvoiceModal } from "@/components/sales/ShareInvoiceModal"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface CustomerDetailsModalProps {
   customer: Customer | null
@@ -38,6 +39,7 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
   const [shareInvoiceOpen, setShareInvoiceOpen] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
+  const { t } = useTranslation()
   const { getCustomerStats, getCustomerSalesHistory } = useCustomers()
   const { toast } = useToast()
 
@@ -97,20 +99,26 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
     }
   }
 
-  if (!customer) return null
-
-  const creditUsage = customer.credit_limit && stats ? (stats.pending_amount / customer.credit_limit) * 100 : 0
+  const creditUsage = customer?.credit_limit && stats ? (stats.pending_amount / customer.credit_limit) * 100 : 0
 
   const getCustomerTypeBadge = (type: string) => {
     switch (type) {
       case "vip":
-        return <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-0">VIP</Badge>
+        return (
+          <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-0">
+            {t("customers.types.vip")}
+          </Badge>
+        )
       case "wholesale":
-        return <Badge className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white border-0">Wholesale</Badge>
+        return (
+          <Badge className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white border-0">
+            {t("customers.types.wholesale")}
+          </Badge>
+        )
       default:
         return (
           <Badge variant="secondary" className="bg-neutral-200 text-neutral-700">
-            Regular
+            {t("customers.types.regular")}
           </Badge>
         )
     }
@@ -121,14 +129,14 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-hidden flex flex-col backdrop-blur-xl bg-white/95 border border-neutral-200/50">
           <DialogHeader>
-            <DialogTitle className="text-2xl">{customer.name}</DialogTitle>
+            <DialogTitle className="text-2xl">{customer?.name}</DialogTitle>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
-              {getCustomerTypeBadge(customer.customer_type || "regular")}
-              {customer.discount_value && customer.discount_value > 0 && customer.discount_type !== "none" && (
+              {customer && getCustomerTypeBadge(customer.customer_type || "regular")}
+              {customer?.discount_value && customer.discount_value > 0 && customer.discount_type !== "none" && (
                 <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                   {customer.discount_type === "percentage"
-                    ? `${customer.discount_value}% Discount`
-                    : `$${customer.discount_value} Discount`}
+                    ? `${customer.discount_value}% ${t("customers.discount")}`
+                    : `$${customer.discount_value} ${t("customers.discount")}`}
                 </Badge>
               )}
             </div>
@@ -140,40 +148,40 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                 value="info"
                 className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200 text-xs sm:text-sm px-2 sm:px-4 py-2"
               >
-                Info
+                {t("customers.modal.info")}
               </TabsTrigger>
               <TabsTrigger
                 value="history"
                 className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200 text-xs sm:text-sm px-2 sm:px-4 py-2"
               >
-                History
+                {t("customers.modal.history")}
               </TabsTrigger>
               <TabsTrigger
                 value="behavior"
                 className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200 text-xs sm:text-sm px-2 sm:px-4 py-2"
               >
-                Behavior
+                {t("customers.modal.behavior")}
               </TabsTrigger>
             </TabsList>
 
             <div className="flex-1 overflow-y-auto mt-4">
               <TabsContent value="info" className="space-y-6 mt-0">
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Contact Information</h3>
+                  <h3 className="font-semibold text-lg">{t("customers.modal.contactInformation")}</h3>
                   <div className="grid gap-3">
-                    {customer.email && (
+                    {customer?.email && (
                       <div className="flex items-center gap-3 p-3 rounded-lg backdrop-blur-sm bg-neutral-50/80 border border-neutral-200/50">
                         <Mail className="w-5 h-5 text-neutral-600" />
                         <span className="text-sm">{customer.email}</span>
                       </div>
                     )}
-                    {customer.phone && (
+                    {customer?.phone && (
                       <div className="flex items-center gap-3 p-3 rounded-lg backdrop-blur-sm bg-neutral-50/80 border border-neutral-200/50">
                         <Phone className="w-5 h-5 text-neutral-600" />
                         <span className="text-sm">{customer.phone}</span>
                       </div>
                     )}
-                    {customer.address && (
+                    {customer?.address && (
                       <div className="flex items-center gap-3 p-3 rounded-lg backdrop-blur-sm bg-neutral-50/80 border border-neutral-200/50">
                         <MapPin className="w-5 h-5 text-neutral-600" />
                         <span className="text-sm">{customer.address}</span>
@@ -183,32 +191,32 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Additional Details</h3>
+                  <h3 className="font-semibold text-lg">{t("customers.modal.additionalDetails")}</h3>
                   <div className="grid gap-3">
-                    {customer.tax_id && (
+                    {customer?.tax_id && (
                       <div className="flex items-center justify-between p-3 rounded-lg backdrop-blur-sm bg-neutral-50/80 border border-neutral-200/50">
-                        <span className="text-sm text-neutral-600">Tax ID</span>
+                        <span className="text-sm text-neutral-600">{t("customers.modal.taxId")}</span>
                         <span className="text-sm font-medium">{customer.tax_id}</span>
                       </div>
                     )}
-                    {customer.date_of_birth && (
+                    {customer?.date_of_birth && (
                       <div className="flex items-center justify-between p-3 rounded-lg backdrop-blur-sm bg-neutral-50/80 border border-neutral-200/50">
-                        <span className="text-sm text-neutral-600">Date of Birth</span>
+                        <span className="text-sm text-neutral-600">{t("customers.modal.dateOfBirth")}</span>
                         <span className="text-sm font-medium">
                           {new Date(customer.date_of_birth).toLocaleDateString()}
                         </span>
                       </div>
                     )}
-                    {customer.credit_limit && (
+                    {customer?.credit_limit && (
                       <div className="space-y-2 p-3 rounded-lg backdrop-blur-sm bg-neutral-50/80 border border-neutral-200/50">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-neutral-600">Credit Limit</span>
+                          <span className="text-sm text-neutral-600">{t("customers.modal.creditLimit")}</span>
                           <span className="text-sm font-medium">${customer.credit_limit.toFixed(2)}</span>
                         </div>
                         {stats && (
                           <>
                             <div className="flex items-center justify-between text-xs">
-                              <span className="text-neutral-500">Used</span>
+                              <span className="text-neutral-500">{t("customers.modal.used")}</span>
                               <span className="font-medium">${stats.pending_amount.toFixed(2)}</span>
                             </div>
                             <div className="w-full bg-neutral-200 rounded-full h-2">
@@ -222,7 +230,7 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                             {creditUsage > 80 && (
                               <div className="flex items-center gap-2 text-xs text-red-600 mt-2">
                                 <AlertCircle className="w-4 h-4" />
-                                <span>Credit limit almost reached</span>
+                                <span>{t("customers.modal.creditLimitWarning")}</span>
                               </div>
                             )}
                           </>
@@ -232,9 +240,9 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                   </div>
                 </div>
 
-                {customer.notes && (
+                {customer?.notes && (
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-lg">Notes</h3>
+                    <h3 className="font-semibold text-lg">{t("customers.modal.notes")}</h3>
                     <p className="text-sm text-neutral-600 p-3 rounded-lg backdrop-blur-sm bg-neutral-50/80 border border-neutral-200/50">
                       {customer.notes}
                     </p>
@@ -250,7 +258,7 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                     ))}
                   </div>
                 ) : salesHistory.length === 0 ? (
-                  <div className="text-center py-12 text-neutral-600">No purchase history yet</div>
+                  <div className="text-center py-12 text-neutral-600">{t("customers.modal.noPurchaseHistory")}</div>
                 ) : (
                   <div className="space-y-3">
                     {salesHistory.map((sale) => (
@@ -275,8 +283,8 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                                 onClick={() => {
                                   if (!sale.public_token) {
                                     toast({
-                                      title: "Invoice not available",
-                                      description: "This sale does not have a public invoice link",
+                                      title: t("customers.modal.invoiceNotAvailable"),
+                                      description: t("customers.modal.invoiceNotAvailableDesc"),
                                       variant: "destructive",
                                     })
                                     return
@@ -285,7 +293,7 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                                 }}
                               >
                                 <ExternalLink className="w-4 h-4 mr-2" />
-                                View
+                                {t("customers.modal.view")}
                               </Button>
                               <Button
                                 size="sm"
@@ -293,8 +301,8 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                                 onClick={() => {
                                   if (!sale.public_token) {
                                     toast({
-                                      title: "Invoice not available",
-                                      description: "This sale does not have a public invoice link",
+                                      title: t("customers.modal.invoiceNotAvailable"),
+                                      description: t("customers.modal.invoiceNotAvailableDesc"),
                                       variant: "destructive",
                                     })
                                     return
@@ -305,7 +313,7 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                                 }}
                               >
                                 <Share2 className="w-4 h-4 mr-2" />
-                                Share
+                                {t("customers.modal.share")}
                               </Button>
                             </div>
                           </div>
@@ -313,7 +321,7 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                           {/* Details Grid */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                             <div>
-                              <p className="text-neutral-500 text-xs mb-1">Sale Number</p>
+                              <p className="text-neutral-500 text-xs mb-1">{t("customers.modal.saleNumber")}</p>
                               <div className="flex items-center gap-2">
                                 <code className="font-mono text-xs bg-neutral-100 px-2 py-1 rounded">
                                   {sale.sale_number}
@@ -333,15 +341,15 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                               </div>
                             </div>
                             <div>
-                              <p className="text-neutral-500 text-xs mb-1">Date</p>
+                              <p className="text-neutral-500 text-xs mb-1">{t("customers.modal.date")}</p>
                               <p className="font-medium">{new Date(sale.sale_date).toLocaleDateString()}</p>
                             </div>
                             <div>
-                              <p className="text-neutral-500 text-xs mb-1">Items</p>
+                              <p className="text-neutral-500 text-xs mb-1">{t("customers.modal.items")}</p>
                               <p className="font-medium">{sale.items?.length || 0} items</p>
                             </div>
                             <div>
-                              <p className="text-neutral-500 text-xs mb-1">Payment Type</p>
+                              <p className="text-neutral-500 text-xs mb-1">{t("customers.modal.paymentType")}</p>
                               <p className="font-medium capitalize">{sale.payment_type}</p>
                             </div>
                           </div>
@@ -367,7 +375,7 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                           <ShoppingCart className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                          <p className="text-sm text-neutral-600">Total Purchases</p>
+                          <p className="text-sm text-neutral-600">{t("customers.modal.totalPurchases")}</p>
                           <p className="text-3xl font-bold text-neutral-900">{stats?.total_purchases || 0}</p>
                         </div>
                       </div>
@@ -379,7 +387,7 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                           <DollarSign className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                          <p className="text-sm text-neutral-600">Total Spent</p>
+                          <p className="text-sm text-neutral-600">{t("customers.modal.totalSpent")}</p>
                           <p className="text-3xl font-bold text-neutral-900">${(stats?.total_spent || 0).toFixed(2)}</p>
                         </div>
                       </div>
@@ -391,7 +399,7 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                           <AlertCircle className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                          <p className="text-sm text-neutral-600">Pending Amount</p>
+                          <p className="text-sm text-neutral-600">{t("customers.modal.pendingAmount")}</p>
                           <p className="text-3xl font-bold text-neutral-900">
                             ${(stats?.pending_amount || 0).toFixed(2)}
                           </p>
@@ -406,7 +414,7 @@ export function CustomerDetailsModal({ customer, open, onClose }: CustomerDetail
                             <TrendingUp className="w-6 h-6 text-white" />
                           </div>
                           <div>
-                            <p className="text-sm text-neutral-600">Average Order Value</p>
+                            <p className="text-sm text-neutral-600">{t("customers.modal.avgOrderValue")}</p>
                             <p className="text-3xl font-bold text-neutral-900">${stats.avg_purchase.toFixed(2)}</p>
                           </div>
                         </div>

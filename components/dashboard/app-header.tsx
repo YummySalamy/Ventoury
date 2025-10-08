@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAlerts } from "@/hooks/useAlerts"
 import { useAuth } from "@/contexts/AuthContext"
+import { LanguageSelector } from "@/components/LanguageSelector"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface AppHeaderProps {
   isCollapsed?: boolean
@@ -17,6 +19,7 @@ export function AppHeader({ isCollapsed = false, isMobile = false }: AppHeaderPr
   const router = useRouter()
   const { alerts, loading, markAsRead, deleteAlert } = useAlerts()
   const { user, signOut } = useAuth()
+  const { t } = useTranslation()
 
   const handleLogout = async () => {
     await signOut()
@@ -34,12 +37,15 @@ export function AppHeader({ isCollapsed = false, isMobile = false }: AppHeaderPr
       <div className="h-full px-4 sm:px-6 md:px-8 flex items-center justify-between">
         <div className="ml-12 lg:ml-0">
           <h2 className="text-base sm:text-lg font-semibold text-neutral-900">
-            Welcome, <span className="italic font-light">{user?.email?.split("@")[0] || "dear user"}!</span>
+            {t("common.welcome")},{" "}
+            <span className="italic font-light">{user?.email?.split("@")[0] || "dear user"}!</span>
           </h2>
-          <p className="text-xs sm:text-sm text-neutral-600 hidden sm:block">Manage your inventory with confidence</p>
+          <p className="text-xs sm:text-sm text-neutral-600 hidden sm:block">{t("dashboard.manageWithConfidence")}</p>
         </div>
 
         <div className="flex items-center gap-2">
+          <LanguageSelector />
+
           <div className="relative">
             <button
               onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
@@ -65,12 +71,12 @@ export function AppHeader({ isCollapsed = false, isMobile = false }: AppHeaderPr
                     className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-neutral-200 py-2 z-20 max-h-96 overflow-y-auto"
                   >
                     <div className="px-4 py-3 border-b border-neutral-100">
-                      <p className="text-sm font-semibold text-neutral-900">Notifications</p>
+                      <p className="text-sm font-semibold text-neutral-900">{t("common.notifications")}</p>
                       <p className="text-xs text-neutral-600">{unreadCount} unread</p>
                     </div>
 
                     {loading ? (
-                      <div className="px-4 py-8 text-center text-sm text-neutral-600">Loading notifications...</div>
+                      <div className="px-4 py-8 text-center text-sm text-neutral-600">{t("common.loading")}</div>
                     ) : alerts.length === 0 ? (
                       <div className="px-4 py-8 text-center text-sm text-neutral-600">No notifications yet</div>
                     ) : (
@@ -103,7 +109,7 @@ export function AppHeader({ isCollapsed = false, isMobile = false }: AppHeaderPr
                                   onClick={() => deleteAlert(alert.id)}
                                   className="text-xs text-red-600 hover:text-red-700 ml-2"
                                 >
-                                  Delete
+                                  {t("common.delete")}
                                 </button>
                               </div>
                             </div>
@@ -149,7 +155,7 @@ export function AppHeader({ isCollapsed = false, isMobile = false }: AppHeaderPr
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
                     >
                       <Settings className="w-4 h-4" />
-                      Settings
+                      {t("common.settings")}
                     </button>
 
                     <button
@@ -160,7 +166,7 @@ export function AppHeader({ isCollapsed = false, isMobile = false }: AppHeaderPr
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
                     >
                       <User className="w-4 h-4" />
-                      Profile
+                      {t("common.profile")}
                     </button>
 
                     <div className="border-t border-neutral-100 mt-2 pt-2">
@@ -169,7 +175,7 @@ export function AppHeader({ isCollapsed = false, isMobile = false }: AppHeaderPr
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                       >
                         <LogOut className="w-4 h-4" />
-                        Logout
+                        {t("common.logout")}
                       </button>
                     </div>
                   </motion.div>

@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/AuthContext"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface DashboardOverview {
   total_revenue: {
@@ -55,12 +56,13 @@ function formatTimeAgo(dateString: string) {
 
 export default function DashboardPage() {
   const { user } = useAuth()
-  const router = useRouter() // Added router for navigation
+  const router = useRouter()
+  const { t } = useTranslation()
   const [overview, setOverview] = useState<DashboardOverview | null>(null)
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [loading, setLoading] = useState(true)
-  const [activityError, setActivityError] = useState<string | null>(null) // Added error state
-  const [activityLimit, setActivityLimit] = useState(10) // Added state for infinite scroll
+  const [activityError, setActivityError] = useState<string | null>(null)
+  const [activityLimit, setActivityLimit] = useState(10)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
 
@@ -182,11 +184,9 @@ export default function DashboardPage() {
     <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-900 mb-2">
-          Dashboard <span className="italic font-light text-neutral-600">Overview</span>
+          {t("dashboard.title")} <span className="italic font-light text-neutral-600">{t("dashboard.subtitle")}</span>
         </h1>
-        <p className="text-sm sm:text-base text-neutral-600 mb-6 sm:mb-8">
-          Here's what's happening with your business today.
-        </p>
+        <p className="text-sm sm:text-base text-neutral-600 mb-6 sm:mb-8">{t("dashboard.welcomeMessage")}</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {loading ? (
@@ -233,7 +233,7 @@ export default function DashboardPage() {
                   <h3 className="text-2xl sm:text-3xl font-bold text-neutral-900 mb-1">
                     ${overview.total_revenue.current.toLocaleString()}
                   </h3>
-                  <p className="text-xs sm:text-sm text-neutral-600">Total Revenue</p>
+                  <p className="text-xs sm:text-sm text-neutral-600">{t("dashboard.totalRevenue")}</p>
                 </GlassCard>
               </motion.div>
 
@@ -265,7 +265,7 @@ export default function DashboardPage() {
                   <h3 className="text-2xl sm:text-3xl font-bold text-neutral-900 mb-1">
                     {overview.active_customers.current.toLocaleString()}
                   </h3>
-                  <p className="text-xs sm:text-sm text-neutral-600">Active Customers</p>
+                  <p className="text-xs sm:text-sm text-neutral-600">{t("dashboard.activeCustomers")}</p>
                 </GlassCard>
               </motion.div>
 
@@ -281,13 +281,13 @@ export default function DashboardPage() {
                       <Package className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                     <div className="flex items-center gap-1 text-xs sm:text-sm font-semibold text-orange-600">
-                      {overview.products_in_stock.low_stock_count} low stock
+                      {overview.products_in_stock.low_stock_count} {t("dashboard.lowStock")}
                     </div>
                   </div>
                   <h3 className="text-2xl sm:text-3xl font-bold text-neutral-900 mb-1">
                     {overview.products_in_stock.current.toLocaleString()}
                   </h3>
-                  <p className="text-xs sm:text-sm text-neutral-600">Products in Stock</p>
+                  <p className="text-xs sm:text-sm text-neutral-600">{t("dashboard.productsInStock")}</p>
                 </GlassCard>
               </motion.div>
 
@@ -307,18 +307,19 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <h3 className="text-2xl sm:text-3xl font-bold text-neutral-900 mb-1">{overview.sales_today.count}</h3>
-                  <p className="text-xs sm:text-sm text-neutral-600">Sales Today</p>
+                  <p className="text-xs sm:text-sm text-neutral-600">{t("dashboard.salesToday")}</p>
                 </GlassCard>
               </motion.div>
             </>
           ) : (
-            <div className="col-span-full text-center text-neutral-600">Error loading dashboard data</div>
+            <div className="col-span-full text-center text-neutral-600">{t("dashboard.errorLoading")}</div>
           )}
         </div>
 
         <GlassCard className="mb-6 sm:mb-8">
           <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4 sm:mb-6">
-            Recent <span className="italic font-light text-neutral-600">Activity</span>
+            {t("dashboard.recentActivity")}{" "}
+            <span className="italic font-light text-neutral-600">{t("dashboard.activitySubtitle")}</span>
           </h2>
           <div className="space-y-0 divide-y divide-neutral-200/50 max-h-[600px] overflow-y-auto">
             {loading ? (
@@ -340,16 +341,16 @@ export default function DashboardPage() {
               </>
             ) : activityError ? (
               <div className="p-6 text-center">
-                <p className="text-neutral-600 mb-2">Unable to load recent activity</p>
+                <p className="text-neutral-600 mb-2">{t("dashboard.unableToLoad")}</p>
                 <p className="text-sm text-neutral-500">{activityError}</p>
               </div>
             ) : recentActivity.length === 0 ? (
-              <p className="p-6 text-center text-neutral-500">No recent activity</p>
+              <p className="p-6 text-center text-neutral-500">{t("dashboard.noActivity")}</p>
             ) : (
               recentActivity.map((activity, index) => {
                 const activityStyle = getActivityStyle(activity.activity_type)
                 const ActivityIcon = activityStyle.icon
-                const route = getActivityRoute(activity) // Get route for activity
+                const route = getActivityRoute(activity)
 
                 return (
                   <motion.div
@@ -357,10 +358,10 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
-                    onClick={() => route && router.push(route)} // Make clickable
+                    onClick={() => route && router.push(route)}
                     className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl transition-all duration-300 hover:bg-neutral-900 hover:text-white group ${
                       route ? "cursor-pointer" : ""
-                    }`} // Changed hover from bg-neutral-50 to bg-neutral-900
+                    }`}
                   >
                     <div className="relative overflow-hidden rounded-lg flex-shrink-0">
                       <div
@@ -401,7 +402,7 @@ export default function DashboardPage() {
                 disabled={loadingMore}
                 className="text-neutral-700 hover:text-neutral-900"
               >
-                {loadingMore ? "Loading..." : "Load More"}
+                {loadingMore ? t("common.loading") : t("common.loadMore")}
               </Button>
             </div>
           )}

@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronDown } from "lucide-react"
 import type { NavItem } from "./sidebar-items"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface NavItemProps {
   item: NavItem
@@ -17,6 +18,7 @@ interface NavItemProps {
 export function NavItemComponent({ item, isCollapsed, onNavigate }: NavItemProps) {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const { t } = useTranslation()
 
   const hasSubItems = item.subItems && item.subItems.length > 0
   const isSubItemActive = hasSubItems && item.subItems?.some((subItem) => pathname === subItem.href)
@@ -49,7 +51,7 @@ export function NavItemComponent({ item, isCollapsed, onNavigate }: NavItemProps
       <item.icon className={`w-5 h-5 flex-shrink-0 relative z-10 ${isActive ? "text-white" : ""}`} />
       {!isCollapsed && (
         <>
-          <span className="font-medium relative z-10">{item.label}</span>
+          <span className="font-medium relative z-10">{t(item.translationKey)}</span>
           {hasSubItems && (
             <motion.div
               animate={{ rotate: isOpen ? 180 : 0 }}
@@ -118,7 +120,7 @@ export function NavItemComponent({ item, isCollapsed, onNavigate }: NavItemProps
                       <subItem.icon
                         className={`w-4 h-4 flex-shrink-0 relative z-10 ${isSubActive ? "text-white" : ""}`}
                       />
-                      <span className="relative z-10">{subItem.label}</span>
+                      <span className="relative z-10">{t(subItem.translationKey)}</span>
                     </Link>
                   )
                 })}

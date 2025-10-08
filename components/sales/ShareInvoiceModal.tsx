@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Copy, Check, Share2, ExternalLink } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface ShareInvoiceModalProps {
   publicToken: string
@@ -15,6 +16,7 @@ interface ShareInvoiceModalProps {
 }
 
 export function ShareInvoiceModal({ publicToken, saleNumber, open, onClose }: ShareInvoiceModalProps) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   const { toast } = useToast()
 
@@ -25,14 +27,14 @@ export function ShareInvoiceModal({ publicToken, saleNumber, open, onClose }: Sh
       await navigator.clipboard.writeText(invoiceUrl)
       setCopied(true)
       toast({
-        title: "Link copied!",
-        description: "Invoice link has been copied to clipboard",
+        title: t("sales.shareModal.linkCopied"),
+        description: t("sales.shareModal.linkCopiedDesc"),
       })
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
       toast({
-        title: "Failed to copy",
-        description: "Please copy the link manually",
+        title: t("sales.shareModal.failedCopy"),
+        description: t("sales.shareModal.copyManually"),
         variant: "destructive",
       })
     }
@@ -42,8 +44,8 @@ export function ShareInvoiceModal({ publicToken, saleNumber, open, onClose }: Sh
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Invoice #${saleNumber}`,
-          text: "View your invoice",
+          title: `${t("sales.shareModal.invoice")} #${saleNumber}`,
+          text: t("sales.shareModal.viewInvoice"),
           url: invoiceUrl,
         })
       } catch (err) {
@@ -62,21 +64,19 @@ export function ShareInvoiceModal({ publicToken, saleNumber, open, onClose }: Sh
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="h-5 w-5" />
-            Share Invoice
+            {t("sales.shareModal.title")}
           </DialogTitle>
-          <DialogDescription>Share this invoice link with your customer</DialogDescription>
+          <DialogDescription>{t("sales.shareModal.description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Invoice Info */}
           <div className="p-4 bg-neutral-50 rounded-lg border border-neutral-200">
-            <p className="text-sm text-neutral-600 mb-1">Invoice Number</p>
+            <p className="text-sm text-neutral-600 mb-1">{t("sales.shareModal.invoiceNumber")}</p>
             <p className="font-semibold text-lg">#{saleNumber}</p>
           </div>
 
-          {/* URL Display */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-neutral-700">Invoice Link</label>
+            <label className="text-sm font-medium text-neutral-700">{t("sales.shareModal.invoiceLink")}</label>
             <div className="flex gap-2">
               <Input value={invoiceUrl} readOnly className="font-mono text-sm" />
               <Button
@@ -90,30 +90,26 @@ export function ShareInvoiceModal({ publicToken, saleNumber, open, onClose }: Sh
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-col gap-2 pt-2">
             <Button onClick={handleCopy} className="w-full bg-neutral-900 hover:bg-neutral-800">
               <Copy className="h-4 w-4 mr-2" />
-              Copy Link
+              {t("sales.shareModal.copyLink")}
             </Button>
 
             {navigator.share && (
               <Button onClick={handleNativeShare} variant="outline" className="w-full bg-transparent">
                 <Share2 className="h-4 w-4 mr-2" />
-                Share via...
+                {t("sales.shareModal.shareVia")}
               </Button>
             )}
 
             <Button onClick={handleOpenInNewTab} variant="outline" className="w-full bg-transparent">
               <ExternalLink className="h-4 w-4 mr-2" />
-              Open in New Tab
+              {t("sales.shareModal.openNewTab")}
             </Button>
           </div>
 
-          {/* Info Text */}
-          <p className="text-xs text-neutral-500 text-center pt-2">
-            This link allows anyone to view the invoice details and payment schedule
-          </p>
+          <p className="text-xs text-neutral-500 text-center pt-2">{t("sales.shareModal.infoText")}</p>
         </div>
       </DialogContent>
     </Dialog>

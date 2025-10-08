@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Montserrat, Open_Sans } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/contexts/AuthContext"
+import { LocaleProvider } from "@/contexts/LocaleContext"
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -48,7 +49,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${montserrat.variable} ${openSans.variable} antialiased`}>
       <body className="font-sans bg-background text-foreground overflow-x-hidden">
-        <AuthProvider>{children}</AuthProvider>
+        <LocaleProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </LocaleProvider>
       </body>
     </html>
   )

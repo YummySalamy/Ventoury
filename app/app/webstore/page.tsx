@@ -24,6 +24,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { PhoneNumberInput } from "@/components/ui/PhoneNumberInput"
+import { useTranslation } from "@/hooks/useTranslation"
 
 const countryCodes = [
   { code: "+1", country: "US/CA" },
@@ -75,6 +76,7 @@ const AnimatedText = ({ text, delay = 0 }: { text: string; delay?: number }) => 
 }
 
 export default function WebStorePage() {
+  const { t } = useTranslation()
   const { toast } = useToast()
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -341,13 +343,13 @@ export default function WebStorePage() {
         <div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-900 mb-2">
             <span className="font-bold">
-              <AnimatedText text="Web" delay={0} />
+              <AnimatedText text={t("webStore.title")} delay={0} />
             </span>{" "}
             <span className="italic font-light text-neutral-600">
-              <AnimatedText text="Store" delay={0.12} />
+              <AnimatedText text={t("webStore.titleItalic")} delay={0.12} />
             </span>
           </h1>
-          <p className="text-sm sm:text-base text-neutral-600">Manage your online store settings and appearance</p>
+          <p className="text-sm sm:text-base text-neutral-600">{t("webStore.description")}</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -359,56 +361,50 @@ export default function WebStorePage() {
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Web Store Guide</DialogTitle>
-                <DialogDescription>Learn how to set up and customize your online store</DialogDescription>
+                <DialogTitle>{t("webStore.guide.title")}</DialogTitle>
+                <DialogDescription>{t("webStore.guide.description")}</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <div className="space-y-2">
                   <h4 className="font-semibold flex items-center gap-2">
                     <Store className="h-4 w-4" />
-                    Store Status
+                    {t("webStore.guide.storeStatus")}
                   </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Toggle your store on/off. When active, customers can browse and purchase your products online.
-                  </p>
+                  <p className="text-sm text-muted-foreground">{t("webStore.guide.storeStatusDesc")}</p>
                 </div>
                 <div className="space-y-2">
                   <h4 className="font-semibold flex items-center gap-2">
                     <Settings className="h-4 w-4" />
-                    General Settings
+                    {t("webStore.guide.generalSettings")}
                   </h4>
                   <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
                     <li>
-                      <strong>Business Name:</strong> Your store's display name (required)
+                      <strong>{t("webStore.guide.businessName")}</strong> {t("webStore.guide.businessNameDesc")}
                     </li>
                     <li>
-                      <strong>Description:</strong> Tell customers about your business
+                      <strong>{t("webStore.guide.description")}</strong> {t("webStore.guide.descriptionDesc")}
                     </li>
                     <li>
-                      <strong>Store URL:</strong> Custom URL slug for your store (e.g., /store/my-shop)
+                      <strong>{t("webStore.guide.storeUrl")}</strong> {t("webStore.guide.storeUrlDesc")}
                     </li>
                     <li>
-                      <strong>Phone Number:</strong> Contact number with country code
+                      <strong>{t("webStore.guide.phoneNumber")}</strong> {t("webStore.guide.phoneNumberDesc")}
                     </li>
                     <li>
-                      <strong>Address:</strong> Your business location
+                      <strong>{t("webStore.guide.address")}</strong> {t("webStore.guide.addressDesc")}
                     </li>
                   </ul>
                 </div>
                 <div className="space-y-2">
                   <h4 className="font-semibold flex items-center gap-2">
                     <Palette className="h-4 w-4" />
-                    Appearance
+                    {t("webStore.guide.appearance")}
                   </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Upload your logo and customize your store's colors. These will be displayed on your public store
-                    page.
-                  </p>
+                  <p className="text-sm text-muted-foreground">{t("webStore.guide.appearanceDesc")}</p>
                 </div>
                 <div className="rounded-lg bg-blue-50 dark:bg-blue-950 p-4 border border-blue-200 dark:border-blue-900">
                   <p className="text-sm text-blue-800 dark:text-blue-200">
-                    <strong>Tip:</strong> Make sure to save your changes using the floating save button that appears
-                    when you modify any settings.
+                    <strong>{t("webStore.guide.tip")}</strong> {t("webStore.guide.tipDesc")}
                   </p>
                 </div>
               </div>
@@ -422,7 +418,7 @@ export default function WebStorePage() {
             disabled={!formData.active}
           >
             <ExternalLink className="h-4 w-4" />
-            Preview Store
+            {t("webStore.previewStore")}
           </Button>
         </div>
       </div>
@@ -433,9 +429,9 @@ export default function WebStorePage() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Store className="h-5 w-5" />
-                Store Status
+                {t("webStore.storeStatus")}
               </CardTitle>
-              <CardDescription>Enable or disable your public web store</CardDescription>
+              <CardDescription>{t("webStore.storeStatusDesc")}</CardDescription>
             </div>
             <Switch
               checked={formData.active}
@@ -454,7 +450,7 @@ export default function WebStorePage() {
               <CardContent>
                 <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950">
                   <p className="text-sm text-green-800 dark:text-green-200">
-                    Your store is live at:{" "}
+                    {t("webStore.yourStoreIsLive")}:{" "}
                     <a href={fullStoreUrl} className="font-medium underline" target="_blank" rel="noopener noreferrer">
                       {fullStoreUrl}
                     </a>
@@ -470,23 +466,23 @@ export default function WebStorePage() {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general" className="gap-2 text-xs sm:text-sm">
             <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">General</span>
+            <span className="hidden sm:inline">{t("webStore.general")}</span>
           </TabsTrigger>
           <TabsTrigger value="appearance" className="gap-2 text-xs sm:text-sm">
             <Palette className="h-4 w-4" />
-            <span className="hidden sm:inline">Appearance</span>
+            <span className="hidden sm:inline">{t("webStore.appearance")}</span>
           </TabsTrigger>
           <TabsTrigger value="domain" className="gap-2 text-xs sm:text-sm">
             <Globe className="h-4 w-4" />
-            <span className="hidden sm:inline">Domain</span>
+            <span className="hidden sm:inline">{t("webStore.domain")}</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-6 mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Store Information</CardTitle>
-              <CardDescription>Basic information about your online store</CardDescription>
+              <CardTitle>{t("webStore.storeInformation")}</CardTitle>
+              <CardDescription>{t("webStore.storeInformationDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <motion.div
@@ -497,11 +493,11 @@ export default function WebStorePage() {
               >
                 <Label htmlFor="business-name" className="text-sm font-medium flex items-center gap-2">
                   <Store className="h-4 w-4" />
-                  Business Name <span className="text-red-500">*</span>
+                  {t("webStore.businessName")} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="business-name"
-                  placeholder="My Awesome Store"
+                  placeholder={t("webStore.businessNamePlaceholder")}
                   value={formData.business_name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, business_name: e.target.value }))}
                   className="transition-all duration-300 focus:ring-2 focus:ring-neutral-900"
@@ -515,11 +511,11 @@ export default function WebStorePage() {
                 className="space-y-2"
               >
                 <Label htmlFor="business-description" className="text-sm font-medium">
-                  Description
+                  {t("webStore.description")}
                 </Label>
                 <Textarea
                   id="business-description"
-                  placeholder="Tell customers about your store..."
+                  placeholder={t("webStore.descriptionPlaceholder")}
                   value={formData.business_description}
                   onChange={(e) => setFormData((prev) => ({ ...prev, business_description: e.target.value }))}
                   rows={4}
@@ -535,7 +531,7 @@ export default function WebStorePage() {
               >
                 <Label htmlFor="store-slug" className="text-sm font-medium flex items-center gap-2">
                   <Globe className="h-4 w-4" />
-                  Store URL Slug <span className="text-red-500">*</span>
+                  {t("webStore.storeUrlSlug")} <span className="text-red-500">*</span>
                 </Label>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                   <span className="text-sm text-muted-foreground">/store/</span>
@@ -552,7 +548,7 @@ export default function WebStorePage() {
                     className="flex-1 transition-all duration-300 focus:ring-2 focus:ring-neutral-900"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">Only lowercase letters, numbers, and hyphens allowed</p>
+                <p className="text-xs text-muted-foreground">{t("webStore.storeUrlSlugHelp")}</p>
               </motion.div>
 
               <motion.div
@@ -563,14 +559,14 @@ export default function WebStorePage() {
               >
                 <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
                   <Phone className="h-4 w-4" />
-                  Phone Number
+                  {t("webStore.phoneNumber")}
                 </Label>
                 <PhoneNumberInput
                   countryCode={countryCode}
                   phoneNumber={phoneNumber}
                   onCountryCodeChange={setCountryCode}
                   onPhoneNumberChange={setPhoneNumber}
-                  placeholder="3216371230"
+                  placeholder={t("webStore.phoneNumberPlaceholder")}
                 />
               </motion.div>
 
@@ -582,11 +578,11 @@ export default function WebStorePage() {
               >
                 <Label htmlFor="address" className="text-sm font-medium flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
-                  Address
+                  {t("webStore.address")}
                 </Label>
                 <Input
                   id="address"
-                  placeholder="123 Main St, City, Country"
+                  placeholder={t("webStore.addressPlaceholder")}
                   value={formData.business_address}
                   onChange={(e) => setFormData((prev) => ({ ...prev, business_address: e.target.value }))}
                   className="transition-all duration-300 focus:ring-2 focus:ring-neutral-900"
@@ -599,8 +595,8 @@ export default function WebStorePage() {
         <TabsContent value="appearance" className="space-y-6 mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Store Banner Preview</CardTitle>
-              <CardDescription>See how your store will look to customers</CardDescription>
+              <CardTitle>{t("webStore.storeBannerPreview")}</CardTitle>
+              <CardDescription>{t("webStore.storeBannerPreviewDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <StoreBannerPreview
@@ -619,8 +615,8 @@ export default function WebStorePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Brand Colors</CardTitle>
-              <CardDescription>Customize your store's color scheme</CardDescription>
+              <CardTitle>{t("webStore.brandColors")}</CardTitle>
+              <CardDescription>{t("webStore.brandColorsDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
@@ -630,7 +626,7 @@ export default function WebStorePage() {
                   transition={{ delay: 0.1 }}
                   className="space-y-2"
                 >
-                  <Label htmlFor="primary-color">Primary Color</Label>
+                  <Label htmlFor="primary-color">{t("webStore.primaryColor")}</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="primary-color"
@@ -664,7 +660,7 @@ export default function WebStorePage() {
                   transition={{ delay: 0.2 }}
                   className="space-y-2"
                 >
-                  <Label htmlFor="secondary-color">Secondary Color</Label>
+                  <Label htmlFor="secondary-color">{t("webStore.secondaryColor")}</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="secondary-color"
@@ -694,7 +690,7 @@ export default function WebStorePage() {
               </div>
 
               <div className="rounded-lg border p-4">
-                <p className="mb-3 text-sm font-medium">Preview</p>
+                <p className="mb-3 text-sm font-medium">{t("webStore.preview")}</p>
                 <div className="flex gap-2">
                   <motion.div
                     className="h-16 flex-1 rounded-xl transition-all"
@@ -715,15 +711,12 @@ export default function WebStorePage() {
         <TabsContent value="domain" className="space-y-4 mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Custom Domain</CardTitle>
-              <CardDescription>Connect your own domain to your store</CardDescription>
+              <CardTitle>{t("webStore.customDomain")}</CardTitle>
+              <CardDescription>{t("webStore.customDomainDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
-                <p className="text-sm text-blue-800 dark:text-blue-200">
-                  Custom domain support is coming soon. You'll be able to connect your own domain like
-                  shop.yourdomain.com to your store.
-                </p>
+                <p className="text-sm text-blue-800 dark:text-blue-200">{t("webStore.customDomainComingSoon")}</p>
               </div>
             </CardContent>
           </Card>
@@ -756,12 +749,12 @@ export default function WebStorePage() {
               {saving || uploadingLogo ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  {uploadingLogo ? "Uploading..." : "Saving..."}
+                  {uploadingLogo ? t("webStore.uploading") : t("webStore.saving")}
                 </>
               ) : (
                 <>
                   <Save className="h-5 w-5" />
-                  Save Settings
+                  {t("webStore.saveSettings")}
                 </>
               )}
             </Button>

@@ -34,6 +34,7 @@ import { useProducts } from "@/hooks/useProducts"
 import { useCategories } from "@/hooks/useCategories"
 import { useCustomFields } from "@/hooks/useCustomFields"
 import { useToast } from "@/hooks/use-toast"
+import { useTranslation } from "@/hooks/useTranslation"
 import Image from "next/image"
 
 type Product = {
@@ -54,6 +55,7 @@ type Product = {
 }
 
 export default function ProductsPage() {
+  const { t } = useTranslation()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null)
   const [viewMode, setViewMode] = useState<"table" | "grid">("table")
@@ -409,9 +411,9 @@ export default function ProductsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-900">
-              Products <span className="italic font-light text-neutral-600">Management</span>
+              {t("products.title")} <span className="italic font-light text-neutral-600">{t("products.subtitle")}</span>
             </h1>
-            <p className="text-sm sm:text-base text-neutral-600 mt-2">Manage your product catalog and inventory</p>
+            <p className="text-sm sm:text-base text-neutral-600 mt-2">{t("products.description")}</p>
           </div>
 
           <div className="flex gap-2">
@@ -439,20 +441,20 @@ export default function ProductsPage() {
                   }}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Product
+                  {t("products.addProduct")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[650px] max-h-[90vh] flex flex-col">
                 <DialogHeader>
-                  <DialogTitle>Add New Product</DialogTitle>
-                  <DialogDescription>Create a new product in your inventory</DialogDescription>
+                  <DialogTitle>{t("products.addProduct")}</DialogTitle>
+                  <DialogDescription>{t("products.description")}</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
                   <div className="flex-1 overflow-y-auto px-1 max-h-[calc(90vh-200px)]">
                     <div className="grid gap-4 py-4">
                       <div className="grid gap-2">
                         <Label htmlFor="image" className="font-semibold">
-                          Product Image
+                          {t("products.productImage")}
                         </Label>
                         <div className="border-2 border-dashed border-neutral-300 rounded-lg hover:border-neutral-400 transition-colors bg-neutral-50">
                           {imagePreview ? (
@@ -484,8 +486,8 @@ export default function ProductsPage() {
                               <div className="p-4 bg-neutral-900 rounded-full mb-3">
                                 <Upload className="w-8 h-8 text-white" />
                               </div>
-                              <p className="text-sm text-neutral-900 font-semibold">Click to upload product image</p>
-                              <p className="text-xs text-neutral-500 mt-2">PNG, JPG up to 5MB</p>
+                              <p className="text-sm text-neutral-900 font-semibold">{t("products.clickToUpload")}</p>
+                              <p className="text-xs text-neutral-500 mt-2">{t("products.imageFormat")}</p>
                             </label>
                           )}
                           <Input
@@ -499,10 +501,10 @@ export default function ProductsPage() {
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="name">Product Name *</Label>
+                        <Label htmlFor="name">{t("products.productName")} *</Label>
                         <Input
                           id="name"
-                          placeholder="Enter product name"
+                          placeholder={t("products.productName")}
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           required
@@ -511,17 +513,17 @@ export default function ProductsPage() {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                          <Label htmlFor="sku">SKU *</Label>
+                          <Label htmlFor="sku">{t("products.sku")} *</Label>
                           <Input
                             id="sku"
-                            placeholder="Enter SKU"
+                            placeholder={t("products.sku")}
                             value={formData.sku}
                             onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                             required
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="category">Category</Label>
+                          <Label htmlFor="category">{t("products.category")}</Label>
                           <Select
                             value={formData.category_id}
                             onValueChange={(value) =>
@@ -529,10 +531,10 @@ export default function ProductsPage() {
                             }
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Select category" />
+                              <SelectValue placeholder={t("products.category")} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">No Category</SelectItem>
+                              <SelectItem value="none">{t("products.noCategory")}</SelectItem>
                               {categories.map((category) => (
                                 <SelectItem key={category.id} value={category.id}>
                                   {category.name}
@@ -544,23 +546,23 @@ export default function ProductsPage() {
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="cost_price">Cost Price (Optional)</Label>
+                        <Label htmlFor="cost_price">{t("products.costPrice")}</Label>
                         <Input
                           id="cost_price"
                           type="number"
                           step="0.01"
-                          placeholder="How much did it cost you?"
+                          placeholder={t("products.costPriceHelp")}
                           value={formData.cost_price}
                           onChange={(e) => {
                             setFormData({ ...formData, cost_price: e.target.value })
                             calculatePriceSuggestions(e.target.value)
                           }}
                         />
-                        <p className="text-xs text-neutral-500">Enter your cost to see suggested sale prices</p>
+                        <p className="text-xs text-neutral-500">{t("products.costPriceHint")}</p>
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="price">Sale Price *</Label>
+                        <Label htmlFor="price">{t("products.salePrice")} *</Label>
                         <Input
                           id="price"
                           type="number"
@@ -573,7 +575,7 @@ export default function ProductsPage() {
 
                         {priceSuggestions.length > 0 && (
                           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <p className="text-xs font-semibold text-blue-900 mb-2">Suggested prices:</p>
+                            <p className="text-xs font-semibold text-blue-900 mb-2">{t("products.suggestedPrices")}</p>
                             <div className="flex flex-wrap gap-2">
                               {priceSuggestions.map((suggestion, idx) => (
                                 <button
@@ -582,7 +584,10 @@ export default function ProductsPage() {
                                   onClick={() => setFormData({ ...formData, price: suggestion.value })}
                                   className="px-3 py-1.5 text-xs bg-white border border-blue-300 rounded-md hover:bg-blue-100 transition-colors font-medium"
                                 >
-                                  {suggestion.label}: ${suggestion.value}
+                                  {t(
+                                    `products.${suggestion.label.includes("Low") ? "lowMargin" : suggestion.label.includes("Standard") ? "standardMargin" : "highMargin"}`,
+                                  )}
+                                  : ${suggestion.value}
                                 </button>
                               ))}
                             </div>
@@ -591,13 +596,13 @@ export default function ProductsPage() {
 
                         {calculateProfitMargin() !== null && (
                           <p className="text-sm text-green-600 font-medium">
-                            Profit margin: {calculateProfitMargin()}%
+                            {t("products.profitMargin")} {calculateProfitMargin()}%
                           </p>
                         )}
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="stock">Initial Stock *</Label>
+                        <Label htmlFor="stock">{t("products.initialStock")} *</Label>
                         <Input
                           id="stock"
                           type="number"
@@ -609,11 +614,11 @@ export default function ProductsPage() {
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="description">Description</Label>
+                        <Label htmlFor="description">{t("products.description")}</Label>
                         <textarea
                           id="description"
                           className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                          placeholder="Product description"
+                          placeholder={t("products.description")}
                           value={formData.description}
                           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         />
@@ -633,17 +638,17 @@ export default function ProductsPage() {
                             className="font-semibold cursor-pointer flex items-center gap-2"
                           >
                             <Globe className="w-4 h-4" />
-                            Display in Web Store
+                            {t("products.displayInWebStore")}
                           </Label>
-                          <p className="text-xs text-neutral-500 mt-1">
-                            Make this product visible in your public marketplace
-                          </p>
+                          <p className="text-xs text-neutral-500 mt-1">{t("products.displayInWebStoreDesc")}</p>
                         </div>
                       </div>
 
                       {customFields.length > 0 && (
                         <div className="border-t pt-4 mt-2">
-                          <h3 className="font-semibold text-neutral-900 mb-3">Predefined Custom Fields</h3>
+                          <h3 className="font-semibold text-neutral-900 mb-3">
+                            {t("products.predefinedCustomFields")}
+                          </h3>
                           <div className="grid gap-4">
                             {customFields.map((field) => (
                               <div key={field.id} className="grid gap-2">
@@ -691,16 +696,14 @@ export default function ProductsPage() {
                       <div className="border-t pt-4 mt-2">
                         <div className="flex items-center justify-between mb-3">
                           <div>
-                            <h3 className="font-semibold text-neutral-900">Additional Custom Fields</h3>
-                            <p className="text-xs text-neutral-500 mt-1">
-                              Add custom attributes like Size, Color, Material, etc.
-                            </p>
+                            <h3 className="font-semibold text-neutral-900">{t("products.additionalCustomFields")}</h3>
+                            <p className="text-xs text-neutral-500 mt-1">{t("products.additionalCustomFieldsDesc")}</p>
                           </div>
                           <button
                             type="button"
                             onClick={addCustomField}
                             className="p-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors"
-                            title="Add custom field"
+                            title={t("products.addCustomField")}
                           >
                             <Plus className="w-4 h-4" />
                           </button>
@@ -713,13 +716,13 @@ export default function ProductsPage() {
                                 <div className="flex-1 grid grid-cols-2 gap-2">
                                   <Input
                                     type="text"
-                                    placeholder="Field name (e.g., Size)"
+                                    placeholder={t("products.fieldNamePlaceholder")}
                                     value={field.key}
                                     onChange={(e) => updateCustomField(index, "key", e.target.value)}
                                   />
                                   <Input
                                     type="text"
-                                    placeholder="Value (e.g., Large)"
+                                    placeholder={t("products.fieldValuePlaceholder")}
                                     value={field.value}
                                     onChange={(e) => updateCustomField(index, "value", e.target.value)}
                                   />
@@ -737,9 +740,7 @@ export default function ProductsPage() {
                         )}
 
                         {customFieldsData.length === 0 && (
-                          <p className="text-sm text-neutral-500 text-center py-4">
-                            No custom fields added yet. Click + to add one.
-                          </p>
+                          <p className="text-sm text-neutral-500 text-center py-4">{t("products.noCustomFields")}</p>
                         )}
                       </div>
                     </div>
@@ -752,16 +753,16 @@ export default function ProductsPage() {
                       onClick={() => setIsDialogOpen(false)}
                       disabled={isCreating}
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </Button>
                     <Button type="submit" className="bg-neutral-900 hover:bg-neutral-800" disabled={isCreating}>
                       {isCreating ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Creating...
+                          {t("products.creating")}
                         </>
                       ) : (
-                        "Create Product"
+                        t("products.createProduct")
                       )}
                     </Button>
                   </div>
@@ -772,8 +773,8 @@ export default function ProductsPage() {
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
               <DialogContent className="sm:max-w-[650px] max-h-[90vh] flex flex-col">
                 <DialogHeader>
-                  <DialogTitle>Edit Product</DialogTitle>
-                  <DialogDescription>Update product information</DialogDescription>
+                  <DialogTitle>{t("products.editProduct")}</DialogTitle>
+                  <DialogDescription>{t("products.updateProductInfo")}</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleUpdate} className="flex flex-col flex-1 overflow-hidden">
                   {/* Same form fields as create, but with handleUpdate */}
@@ -781,7 +782,7 @@ export default function ProductsPage() {
                     <div className="grid gap-4 py-4">
                       <div className="grid gap-2">
                         <Label htmlFor="image" className="font-semibold">
-                          Product Image
+                          {t("products.productImage")}
                         </Label>
                         <div className="border-2 border-dashed border-neutral-300 rounded-lg hover:border-neutral-400 transition-colors bg-neutral-50">
                           {imagePreview ? (
@@ -813,8 +814,8 @@ export default function ProductsPage() {
                               <div className="p-4 bg-neutral-900 rounded-full mb-3">
                                 <Upload className="w-8 h-8 text-white" />
                               </div>
-                              <p className="text-sm text-neutral-900 font-semibold">Click to upload product image</p>
-                              <p className="text-xs text-neutral-500 mt-2">PNG, JPG up to 5MB</p>
+                              <p className="text-sm text-neutral-900 font-semibold">{t("products.clickToUpload")}</p>
+                              <p className="text-xs text-neutral-500 mt-2">{t("products.imageFormat")}</p>
                             </label>
                           )}
                           <Input
@@ -828,10 +829,10 @@ export default function ProductsPage() {
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="name">Product Name *</Label>
+                        <Label htmlFor="name">{t("products.productName")} *</Label>
                         <Input
                           id="name"
-                          placeholder="Enter product name"
+                          placeholder={t("products.productName")}
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           required
@@ -840,17 +841,17 @@ export default function ProductsPage() {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                          <Label htmlFor="sku">SKU *</Label>
+                          <Label htmlFor="sku">{t("products.sku")} *</Label>
                           <Input
                             id="sku"
-                            placeholder="Enter SKU"
+                            placeholder={t("products.sku")}
                             value={formData.sku}
                             onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                             required
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="category">Category</Label>
+                          <Label htmlFor="category">{t("products.category")}</Label>
                           <Select
                             value={formData.category_id}
                             onValueChange={(value) =>
@@ -858,10 +859,10 @@ export default function ProductsPage() {
                             }
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Select category" />
+                              <SelectValue placeholder={t("products.category")} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">No Category</SelectItem>
+                              <SelectItem value="none">{t("products.noCategory")}</SelectItem>
                               {categories.map((category) => (
                                 <SelectItem key={category.id} value={category.id}>
                                   {category.name}
@@ -873,23 +874,23 @@ export default function ProductsPage() {
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="cost_price">Cost Price (Optional)</Label>
+                        <Label htmlFor="cost_price">{t("products.costPrice")}</Label>
                         <Input
                           id="cost_price"
                           type="number"
                           step="0.01"
-                          placeholder="How much did it cost you?"
+                          placeholder={t("products.costPriceHelp")}
                           value={formData.cost_price}
                           onChange={(e) => {
                             setFormData({ ...formData, cost_price: e.target.value })
                             calculatePriceSuggestions(e.target.value)
                           }}
                         />
-                        <p className="text-xs text-neutral-500">Enter your cost to see suggested sale prices</p>
+                        <p className="text-xs text-neutral-500">{t("products.costPriceHint")}</p>
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="price">Sale Price *</Label>
+                        <Label htmlFor="price">{t("products.salePrice")} *</Label>
                         <Input
                           id="price"
                           type="number"
@@ -902,7 +903,7 @@ export default function ProductsPage() {
 
                         {priceSuggestions.length > 0 && (
                           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <p className="text-xs font-semibold text-blue-900 mb-2">Suggested prices:</p>
+                            <p className="text-xs font-semibold text-blue-900 mb-2">{t("products.suggestedPrices")}</p>
                             <div className="flex flex-wrap gap-2">
                               {priceSuggestions.map((suggestion, idx) => (
                                 <button
@@ -911,7 +912,10 @@ export default function ProductsPage() {
                                   onClick={() => setFormData({ ...formData, price: suggestion.value })}
                                   className="px-3 py-1.5 text-xs bg-white border border-blue-300 rounded-md hover:bg-blue-100 transition-colors font-medium"
                                 >
-                                  {suggestion.label}: ${suggestion.value}
+                                  {t(
+                                    `products.${suggestion.label.includes("Low") ? "lowMargin" : suggestion.label.includes("Standard") ? "standardMargin" : "highMargin"}`,
+                                  )}
+                                  : ${suggestion.value}
                                 </button>
                               ))}
                             </div>
@@ -920,13 +924,13 @@ export default function ProductsPage() {
 
                         {calculateProfitMargin() !== null && (
                           <p className="text-sm text-green-600 font-medium">
-                            Profit margin: {calculateProfitMargin()}%
+                            {t("products.profitMargin")} {calculateProfitMargin()}%
                           </p>
                         )}
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="stock">Initial Stock *</Label>
+                        <Label htmlFor="stock">{t("products.initialStock")} *</Label>
                         <Input
                           id="stock"
                           type="number"
@@ -938,11 +942,11 @@ export default function ProductsPage() {
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="description">Description</Label>
+                        <Label htmlFor="description">{t("products.description")}</Label>
                         <textarea
                           id="description"
                           className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                          placeholder="Product description"
+                          placeholder={t("products.description")}
                           value={formData.description}
                           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         />
@@ -962,17 +966,17 @@ export default function ProductsPage() {
                             className="font-semibold cursor-pointer flex items-center gap-2"
                           >
                             <Globe className="w-4 h-4" />
-                            Display in Web Store
+                            {t("products.displayInWebStore")}
                           </Label>
-                          <p className="text-xs text-neutral-500 mt-1">
-                            Make this product visible in your public marketplace
-                          </p>
+                          <p className="text-xs text-neutral-500 mt-1">{t("products.displayInWebStoreDesc")}</p>
                         </div>
                       </div>
 
                       {customFields.length > 0 && (
                         <div className="border-t pt-4 mt-2">
-                          <h3 className="font-semibold text-neutral-900 mb-3">Predefined Custom Fields</h3>
+                          <h3 className="font-semibold text-neutral-900 mb-3">
+                            {t("products.predefinedCustomFields")}
+                          </h3>
                           <div className="grid gap-4">
                             {customFields.map((field) => (
                               <div key={field.id} className="grid gap-2">
@@ -1020,16 +1024,14 @@ export default function ProductsPage() {
                       <div className="border-t pt-4 mt-2">
                         <div className="flex items-center justify-between mb-3">
                           <div>
-                            <h3 className="font-semibold text-neutral-900">Additional Custom Fields</h3>
-                            <p className="text-xs text-neutral-500 mt-1">
-                              Add custom attributes like Size, Color, Material, etc.
-                            </p>
+                            <h3 className="font-semibold text-neutral-900">{t("products.additionalCustomFields")}</h3>
+                            <p className="text-xs text-neutral-500 mt-1">{t("products.additionalCustomFieldsDesc")}</p>
                           </div>
                           <button
                             type="button"
                             onClick={addCustomField}
                             className="p-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors"
-                            title="Add custom field"
+                            title={t("products.addCustomField")}
                           >
                             <Plus className="w-4 h-4" />
                           </button>
@@ -1042,13 +1044,13 @@ export default function ProductsPage() {
                                 <div className="flex-1 grid grid-cols-2 gap-2">
                                   <Input
                                     type="text"
-                                    placeholder="Field name (e.g., Size)"
+                                    placeholder={t("products.fieldNamePlaceholder")}
                                     value={field.key}
                                     onChange={(e) => updateCustomField(index, "key", e.target.value)}
                                   />
                                   <Input
                                     type="text"
-                                    placeholder="Value (e.g., Large)"
+                                    placeholder={t("products.fieldValuePlaceholder")}
                                     value={field.value}
                                     onChange={(e) => updateCustomField(index, "value", e.target.value)}
                                   />
@@ -1066,9 +1068,7 @@ export default function ProductsPage() {
                         )}
 
                         {customFieldsData.length === 0 && (
-                          <p className="text-sm text-neutral-500 text-center py-4">
-                            No custom fields added yet. Click + to add one.
-                          </p>
+                          <p className="text-sm text-neutral-500 text-center py-4">{t("products.noCustomFields")}</p>
                         )}
                       </div>
                     </div>
@@ -1084,16 +1084,16 @@ export default function ProductsPage() {
                       }}
                       disabled={isUpdating}
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </Button>
                     <Button type="submit" className="bg-neutral-900 hover:bg-neutral-800" disabled={isUpdating}>
                       {isUpdating ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Updating...
+                          {t("products.updating")}
                         </>
                       ) : (
-                        "Update Product"
+                        t("products.updateProduct")
                       )}
                     </Button>
                   </div>
@@ -1110,7 +1110,7 @@ export default function ProductsPage() {
                 <Package className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-sm text-neutral-600">Total Products</p>
+                <p className="text-sm text-neutral-600">{t("products.totalProducts")}</p>
                 <p className="text-2xl font-bold text-neutral-900">{totalProducts}</p>
               </div>
             </div>
@@ -1121,7 +1121,7 @@ export default function ProductsPage() {
                 <Package className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-sm text-neutral-600">In Stock</p>
+                <p className="text-sm text-neutral-600">{t("products.inStock")}</p>
                 <p className="text-2xl font-bold text-neutral-900">{inStock}</p>
               </div>
             </div>
@@ -1132,7 +1132,7 @@ export default function ProductsPage() {
                 <Package className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-sm text-neutral-600">Low Stock</p>
+                <p className="text-sm text-neutral-600">{t("products.lowStock")}</p>
                 <p className="text-2xl font-bold text-neutral-900">{lowStock}</p>
               </div>
             </div>
@@ -1143,7 +1143,7 @@ export default function ProductsPage() {
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
-              <Input placeholder="Search products..." className="pl-10" />
+              <Input placeholder={t("products.searchPlaceholder")} className="pl-10" />
             </div>
             <div className="flex gap-2">
               <Button
@@ -1164,7 +1164,7 @@ export default function ProductsPage() {
               </Button>
               <Button variant="outline" className="flex-1 sm:flex-initial bg-transparent">
                 <Filter className="w-4 h-4 mr-2" />
-                <span className="sm:inline">Filter</span>
+                <span className="sm:inline">{t("common.filter")}</span>
               </Button>
             </div>
           </div>
@@ -1174,7 +1174,7 @@ export default function ProductsPage() {
           <GlassCard>
             <div className="text-center py-12">
               <div className="w-12 h-12 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-neutral-600">Loading products...</p>
+              <p className="text-neutral-600">{t("products.loadingProducts")}</p>
             </div>
           </GlassCard>
         )}
@@ -1182,7 +1182,9 @@ export default function ProductsPage() {
         {error && (
           <GlassCard>
             <div className="text-center py-12">
-              <p className="text-red-600">Error: {error}</p>
+              <p className="text-red-600">
+                {t("common.error")}: {error}
+              </p>
             </div>
           </GlassCard>
         )}
@@ -1195,26 +1197,26 @@ export default function ProductsPage() {
                   <thead>
                     <tr className="border-b border-neutral-200">
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm">
-                        Image
+                        {t("products.image")}
                       </th>
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm">
-                        SKU
+                        {t("products.sku")}
                       </th>
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm">
-                        Product
+                        {t("products.product")}
                       </th>
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm">
-                        Stock
+                        {t("products.stock")}
                       </th>
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm">
-                        Price
+                        {t("products.price")}
                       </th>
                       {/* Added marketplace column header */}
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm">
-                        Marketplace
+                        {t("products.marketplace")}
                       </th>
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm">
-                        Actions
+                        {t("products.actions")}
                       </th>
                     </tr>
                   </thead>
@@ -1222,7 +1224,7 @@ export default function ProductsPage() {
                     {products.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="text-center py-12 text-neutral-600">
-                          No products yet. Create your first product to get started!
+                          {t("products.noProducts")}
                         </td>
                       </tr>
                     ) : (
@@ -1275,7 +1277,7 @@ export default function ProductsPage() {
                                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                               }`}
                             >
-                              {product.show_in_marketplace ? "Live" : "Hidden"}
+                              {product.show_in_marketplace ? t("products.live") : t("products.hidden")}
                             </button>
                           </td>
                           <td className="py-3 sm:py-4 px-2 sm:px-4">
@@ -1319,9 +1321,7 @@ export default function ProductsPage() {
             {products.length === 0 ? (
               <div className="col-span-full">
                 <GlassCard>
-                  <div className="text-center py-12 text-neutral-600">
-                    No products yet. Create your first product to get started!
-                  </div>
+                  <div className="text-center py-12 text-neutral-600">{t("products.noProducts")}</div>
                 </GlassCard>
               </div>
             ) : (
@@ -1356,7 +1356,9 @@ export default function ProductsPage() {
                       <p className="text-xs text-neutral-500">SKU: {product.sku}</p>
                       <div className="flex items-center justify-between">
                         <p className="text-lg font-bold text-neutral-900">${product.price.toFixed(2)}</p>
-                        <p className="text-sm text-neutral-600">Stock: {product.stock_quantity}</p>
+                        <p className="text-sm text-neutral-600">
+                          {t("products.stock")}: {product.stock_quantity}
+                        </p>
                       </div>
                       <div className="flex gap-2 pt-2">
                         <Button
@@ -1369,7 +1371,7 @@ export default function ProductsPage() {
                           }}
                         >
                           <Edit className="w-3 h-3 mr-1" />
-                          Edit
+                          {t("common.edit")}
                         </Button>
                         <Button
                           variant="outline"
@@ -1384,12 +1386,12 @@ export default function ProductsPage() {
                           {isDeleting === product.id ? (
                             <>
                               <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 animate-spin" />
-                              Deleting...
+                              {t("products.deleting")}
                             </>
                           ) : (
                             <>
                               <Trash2 className="w-3 h-3 mr-1" />
-                              Delete
+                              {t("common.delete")}
                             </>
                           )}
                         </Button>
@@ -1405,24 +1407,24 @@ export default function ProductsPage() {
         <Dialog open={!!deleteConfirmProduct} onOpenChange={() => setDeleteConfirmProduct(null)}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Delete Product?</DialogTitle>
+              <DialogTitle>{t("products.deleteProductTitle")}</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete <strong>{deleteConfirmProduct?.name}</strong>? This action cannot be
-                undone.
+                {t("products.deleteProductConfirm")} <strong>{deleteConfirmProduct?.name}</strong>?{" "}
+                {t("products.deleteProductWarning")}
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-end gap-3 pt-4">
               <Button variant="outline" onClick={() => setDeleteConfirmProduct(null)} disabled={!!isDeleting}>
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white" disabled={!!isDeleting}>
                 {isDeleting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Deleting...
+                    {t("products.deleting")}
                   </>
                 ) : (
-                  "Delete"
+                  t("common.delete")
                 )}
               </Button>
             </div>
@@ -1433,7 +1435,7 @@ export default function ProductsPage() {
           <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-2xl">{previewProduct?.name}</DialogTitle>
-              <DialogDescription>Product Details</DialogDescription>
+              <DialogDescription>{t("products.productDetails")}</DialogDescription>
             </DialogHeader>
             {previewProduct && (
               <div className="space-y-6">
@@ -1449,52 +1451,58 @@ export default function ProductsPage() {
                 )}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-neutral-600 mb-1">SKU</p>
+                    <p className="text-sm text-neutral-600 mb-1">{t("products.sku")}</p>
                     <p className="font-semibold text-neutral-900">{previewProduct.sku}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-neutral-600 mb-1">Price</p>
+                    <p className="text-sm text-neutral-600 mb-1">{t("products.price")}</p>
                     <p className="font-semibold text-neutral-900 text-xl">${previewProduct.price.toFixed(2)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-neutral-600 mb-1">Stock Quantity</p>
-                    <p className="font-semibold text-neutral-900">{previewProduct.stock_quantity} units</p>
+                    <p className="text-sm text-neutral-600 mb-1">{t("products.stockQuantity")}</p>
+                    <p className="font-semibold text-neutral-900">
+                      {previewProduct.stock_quantity} {t("products.units")}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-sm text-neutral-600 mb-1">Status</p>
+                    <p className="text-sm text-neutral-600 mb-1">{t("products.status")}</p>
                     <p className="font-semibold text-neutral-900">
                       {previewProduct.stock_quantity > 10 ? (
-                        <span className="text-green-600">In Stock</span>
+                        <span className="text-green-600">{t("products.inStockStatus")}</span>
                       ) : previewProduct.stock_quantity > 0 ? (
-                        <span className="text-orange-600">Low Stock</span>
+                        <span className="text-orange-600">{t("products.lowStockStatus")}</span>
                       ) : (
-                        <span className="text-red-600">Out of Stock</span>
+                        <span className="text-red-600">{t("products.outOfStockStatus")}</span>
                       )}
                     </p>
                   </div>
                 </div>
                 {previewProduct.description && (
                   <div>
-                    <p className="text-sm text-neutral-600 mb-2">Description</p>
+                    <p className="text-sm text-neutral-600 mb-2">{t("products.description")}</p>
                     <p className="text-neutral-900">{previewProduct.description}</p>
                   </div>
                 )}
                 <div className="flex gap-3 pt-4">
-                  <Button variant="outline" className="flex-1 bg-transparent">
+                  <Button
+                    variant="outline"
+                    className="flex-1 bg-transparent"
+                    onClick={() => handleEdit(previewProduct)}
+                  >
                     <Edit className="w-4 h-4 mr-2" />
-                    Edit Product
+                    {t("common.edit")}
                   </Button>
                   <Button
                     variant="outline"
                     className="flex-1 hover:bg-red-500 hover:text-white hover:border-red-500 bg-transparent"
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleDelete(previewProduct.id, previewProduct.name)
+                      handleDelete()
                       setPreviewProduct(null)
                     }}
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Delete
+                    {t("common.delete")}
                   </Button>
                 </div>
               </div>

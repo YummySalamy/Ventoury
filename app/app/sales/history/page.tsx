@@ -54,6 +54,7 @@ import { SaleDetailsModal } from "@/components/sales/SaleDetailsModal"
 import { InstallmentHelpDialog } from "@/components/sales/InstallmentHelpDialog"
 import { ShareInvoiceModal } from "@/components/sales/ShareInvoiceModal"
 import { Notification } from "@/components/ui/notification"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface CartItem {
   product_id: string
@@ -65,6 +66,7 @@ interface CartItem {
 }
 
 export default function SalesHistoryPage() {
+  const { t } = useTranslation()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState("")
   const [paymentType, setPaymentType] = useState<"cash" | "credit" | "debit" | "transfer">("cash")
@@ -355,9 +357,9 @@ export default function SalesHistoryPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-900">
-              Sales <span className="italic font-light text-neutral-600">History</span>
+              {t("sales.title")} <span className="italic font-light text-neutral-600">{t("sales.subtitle")}</span>
             </h1>
-            <p className="text-sm sm:text-base text-neutral-600 mt-2">View and manage all your sales transactions</p>
+            <p className="text-sm sm:text-base text-neutral-600 mt-2">{t("sales.description")}</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <InstallmentHelpDialog />
@@ -374,15 +376,15 @@ export default function SalesHistoryPage() {
               <DialogTrigger asChild>
                 <Button className="bg-neutral-900 hover:bg-neutral-800 w-full sm:w-auto">
                   <Plus className="w-4 h-4 mr-2" />
-                  New Sale
+                  {t("sales.newSale")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
                 <DialogHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <DialogTitle>Create New Sale</DialogTitle>
-                      <DialogDescription>Add products and complete the sale</DialogDescription>
+                      <DialogTitle>{t("sales.createNewSale")}</DialogTitle>
+                      <DialogDescription>{t("sales.addProductsComplete")}</DialogDescription>
                     </div>
                     <Button
                       variant="ghost"
@@ -391,7 +393,7 @@ export default function SalesHistoryPage() {
                       className="gap-2 bg-white/10 backdrop-blur-sm hover:bg-white/20"
                     >
                       <HelpCircle className="w-4 h-4" />
-                      <span>Tutorial</span>
+                      <span>{t("sales.tutorial")}</span>
                     </Button>
                   </div>
                 </DialogHeader>
@@ -418,12 +420,12 @@ export default function SalesHistoryPage() {
                           <div className="absolute inset-0 bg-black rounded-lg" />
                           <User className="w-5 h-5 relative z-10 text-white" />
                         </div>
-                        Customer <span className="text-red-500">*</span>
+                        {t("sales.customer")} <span className="text-red-500">*</span>
                       </Label>
                       <div className="grid gap-3">
                         <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
                           <SelectTrigger className="h-12 w-full">
-                            <SelectValue placeholder="Select a customer..." />
+                            <SelectValue placeholder={t("sales.selectCustomer")} />
                           </SelectTrigger>
                           <SelectContent>
                             {customers.map((customer) => (
@@ -489,12 +491,12 @@ export default function SalesHistoryPage() {
                           <div className="absolute inset-0 bg-black rounded-lg" />
                           <Package className="w-5 h-5 relative z-10 text-white" />
                         </div>
-                        Add Products
+                        {t("sales.addProducts")}
                       </h3>
                       <div className="grid grid-cols-[1fr_120px_auto] gap-2">
                         <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select product..." />
+                            <SelectValue placeholder={t("sales.selectProduct")} />
                           </SelectTrigger>
                           <SelectContent>
                             {products.map((product) => (
@@ -527,7 +529,7 @@ export default function SalesHistoryPage() {
                           min="0"
                           value={quantity}
                           onChange={(e) => setQuantity(e.target.value)}
-                          placeholder="Qty"
+                          placeholder={t("sales.qty")}
                           className="h-10"
                         />
                         <Button
@@ -551,7 +553,7 @@ export default function SalesHistoryPage() {
                         >
                           <h3 className="font-semibold mb-3 flex items-center gap-2">
                             <ShoppingCart className="w-5 h-5 text-green-600" />
-                            Cart Items ({cart.length})
+                            {t("sales.cartItems")} ({cart.length})
                           </h3>
                           <div className="space-y-2">
                             {cart.map((item) => (
@@ -597,7 +599,7 @@ export default function SalesHistoryPage() {
                               </motion.div>
                             ))}
                             <div className="flex justify-between items-center pt-3 border-t-2 border-neutral-200 font-bold text-lg">
-                              <span>Total:</span>
+                              <span>{t("sales.total")}:</span>
                               <span className="text-green-600">${totalAmount.toFixed(2)}</span>
                             </div>
                           </div>
@@ -612,7 +614,7 @@ export default function SalesHistoryPage() {
                           <div className="absolute inset-0 bg-black rounded-lg" />
                           <CreditCard className="w-5 h-5 relative z-10 text-white" />
                         </div>
-                        Payment Method
+                        {t("sales.paymentMethod")}
                       </Label>
                       <Select value={paymentType} onValueChange={(value: any) => setPaymentType(value)}>
                         <SelectTrigger className="h-12">
@@ -622,25 +624,25 @@ export default function SalesHistoryPage() {
                           <SelectItem value="cash">
                             <div className="flex items-center gap-2">
                               <Wallet className="w-4 h-4 text-green-600" />
-                              <span>Cash</span>
+                              <span>{t("sales.cash")}</span>
                             </div>
                           </SelectItem>
                           <SelectItem value="credit">
                             <div className="flex items-center gap-2">
                               <Calendar className="w-4 h-4 text-blue-600" />
-                              <span>Credit (Installments)</span>
+                              <span>{t("sales.credit")}</span>
                             </div>
                           </SelectItem>
                           <SelectItem value="debit" disabled>
                             <div className="flex items-center gap-2">
                               <CreditCard className="w-4 h-4 text-purple-400" />
-                              <span className="text-neutral-400">Debit Card (Coming Soon)</span>
+                              <span className="text-neutral-400">{t("sales.debitCard")}</span>
                             </div>
                           </SelectItem>
                           <SelectItem value="transfer" disabled>
                             <div className="flex items-center gap-2">
                               <DollarSign className="w-4 h-4 text-orange-400" />
-                              <span className="text-neutral-400">Bank Transfer (Coming Soon)</span>
+                              <span className="text-neutral-400">{t("sales.bankTransfer")}</span>
                             </div>
                           </SelectItem>
                         </SelectContent>
@@ -650,10 +652,10 @@ export default function SalesHistoryPage() {
                     {/* Installments (if credit) */}
                     {paymentType === "credit" && (
                       <div className="border rounded-lg p-4 bg-blue-50">
-                        <h3 className="font-semibold mb-3">Installment Details</h3>
+                        <h3 className="font-semibold mb-3">{t("sales.installmentDetails")}</h3>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="grid gap-2">
-                            <Label>Number of Installments</Label>
+                            <Label>{t("sales.numberOfInstallments")}</Label>
                             <Input
                               type="number"
                               min="2"
@@ -662,7 +664,7 @@ export default function SalesHistoryPage() {
                             />
                           </div>
                           <div className="grid gap-2">
-                            <Label>First Due Date</Label>
+                            <Label>{t("sales.firstDueDate")}</Label>
                             <Input
                               type="date"
                               value={firstDueDate}
@@ -672,17 +674,17 @@ export default function SalesHistoryPage() {
                           </div>
                         </div>
                         <p className="text-sm text-neutral-600 mt-2">
-                          Each installment: ${(totalAmount / installmentCount).toFixed(2)}
+                          {t("sales.eachInstallment")}: ${(totalAmount / installmentCount).toFixed(2)}
                         </p>
                       </div>
                     )}
 
                     {/* Notes */}
                     <div className="grid gap-2">
-                      <Label>Notes (Optional)</Label>
+                      <Label>{t("sales.notes")}</Label>
                       <textarea
                         className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        placeholder="Add any notes about this sale"
+                        placeholder={t("sales.addNotes")}
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                       />
@@ -700,7 +702,7 @@ export default function SalesHistoryPage() {
                     }}
                     disabled={isCreating}
                   >
-                    Cancel
+                    {t("sales.cancel")}
                   </Button>
                   <Button
                     onClick={handleCreateSale}
@@ -710,12 +712,12 @@ export default function SalesHistoryPage() {
                     {isCreating ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Creating...
+                        {t("sales.creating")}
                       </>
                     ) : (
                       <>
                         <ShoppingCart className="w-4 h-4 mr-2" />
-                        Complete Sale
+                        {t("sales.completeSale")}
                       </>
                     )}
                   </Button>
@@ -723,82 +725,9 @@ export default function SalesHistoryPage() {
               </DialogContent>
             </Dialog>
 
-            <Dialog open={showTutorial} onOpenChange={setShowTutorial}>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-3">
-                    <div className="relative w-10 h-10 flex items-center justify-center">
-                      <div className="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-full" />
-                      <div className="absolute inset-0 bg-black rounded-full" />
-                      <HelpCircle className="w-5 h-5 relative z-10 text-white" />
-                    </div>
-                    How to Create a Sale
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="flex gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-black to-neutral-700 flex items-center justify-center text-white font-semibold shadow-lg">
-                      1
-                    </div>
-                    <div className="flex-1 p-3 rounded-lg bg-neutral-50 relative overflow-hidden">
-                      <h4 className="font-semibold mb-1 flex items-center gap-2">
-                        <User className="w-5 h-5 text-neutral-900" />
-                        Select Customer
-                      </h4>
-                      <p className="text-sm text-neutral-600">
-                        Choose a customer from your list. This field is required.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-black to-neutral-700 flex items-center justify-center text-white font-semibold shadow-lg">
-                      2
-                    </div>
-                    <div className="flex-1 p-3 rounded-lg bg-neutral-50 relative overflow-hidden">
-                      <h4 className="font-semibold mb-1 flex items-center gap-2">
-                        <Package className="w-5 h-5 text-neutral-900" />
-                        Add Products
-                      </h4>
-                      <p className="text-sm text-neutral-600">
-                        Select products, set quantities, and add them to your cart. You can edit quantities in the cart.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-black to-neutral-700 flex items-center justify-center text-white font-semibold shadow-lg">
-                      3
-                    </div>
-                    <div className="flex-1 p-3 rounded-lg bg-neutral-50 relative overflow-hidden">
-                      <h4 className="font-semibold mb-1 flex items-center gap-2">
-                        <CreditCard className="w-5 h-5 text-neutral-900" />
-                        Choose Payment Method
-                      </h4>
-                      <p className="text-sm text-neutral-600">
-                        Select how the customer will pay. For credit sales, set installment details.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-black to-neutral-700 flex items-center justify-center text-white font-semibold shadow-lg">
-                      4
-                    </div>
-                    <div className="flex-1 p-3 rounded-lg bg-neutral-50 relative overflow-hidden">
-                      <h4 className="font-semibold mb-1 flex items-center gap-2">
-                        <ShoppingCart className="w-5 h-5 text-neutral-900" />
-                        Complete Sale
-                      </h4>
-                      <p className="text-sm text-neutral-600">
-                        Review your cart and click "Complete Sale" to finalize the transaction.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-
             <Button variant="outline" className="w-full sm:w-auto bg-transparent">
               <Download className="w-4 h-4 mr-2" />
-              Export
+              {t("sales.export")}
             </Button>
           </div>
         </div>
@@ -810,7 +739,7 @@ export default function SalesHistoryPage() {
                 <DollarSign className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-sm sm:text-base text-neutral-600">Total Revenue</p>
+                <p className="text-sm sm:text-base text-neutral-600">{t("sales.totalRevenue")}</p>
                 <p className="text-2xl sm:text-3xl font-bold text-neutral-900">${totalRevenue.toFixed(2)}</p>
               </div>
             </div>
@@ -821,7 +750,7 @@ export default function SalesHistoryPage() {
                 <ShoppingCart className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-sm sm:text-base text-neutral-600">Total Orders</p>
+                <p className="text-sm sm:text-base text-neutral-600">{t("sales.totalOrders")}</p>
                 <p className="text-2xl sm:text-3xl font-bold text-neutral-900">{totalOrders}</p>
               </div>
             </div>
@@ -832,7 +761,7 @@ export default function SalesHistoryPage() {
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-sm sm:text-base text-neutral-600">Avg. Order Value</p>
+                <p className="text-sm sm:text-base text-neutral-600">{t("sales.avgOrderValue")}</p>
                 <p className="text-2xl sm:text-3xl font-bold text-neutral-900">${avgOrderValue.toFixed(2)}</p>
               </div>
             </div>
@@ -844,28 +773,27 @@ export default function SalesHistoryPage() {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Filter className="h-5 w-5" />
-                Filters
+                {t("sales.filters")}
                 {activeFiltersCount > 0 && (
                   <Badge variant="secondary" className="ml-2">
-                    {activeFiltersCount} active
+                    {activeFiltersCount} {t("sales.active")}
                   </Badge>
                 )}
               </h3>
               {activeFiltersCount > 0 && (
                 <Button variant="ghost" size="sm" onClick={clearAllFilters}>
-                  Clear all
+                  {t("sales.clearAll")}
                 </Button>
               )}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {/* Search */}
               <div className="space-y-2">
-                <Label className="text-xs text-neutral-600">Search</Label>
+                <Label className="text-xs text-neutral-600">{t("sales.search")}</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                   <Input
-                    placeholder="Customer, amount..."
+                    placeholder={t("sales.searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
@@ -873,27 +801,24 @@ export default function SalesHistoryPage() {
                 </div>
               </div>
 
-              {/* Date From */}
               <div className="space-y-2">
-                <Label className="text-xs text-neutral-600">From Date</Label>
+                <Label className="text-xs text-neutral-600">{t("sales.fromDate")}</Label>
                 <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
               </div>
 
-              {/* Date To */}
               <div className="space-y-2">
-                <Label className="text-xs text-neutral-600">To Date</Label>
+                <Label className="text-xs text-neutral-600">{t("sales.toDate")}</Label>
                 <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
               </div>
 
-              {/* Customer Filter */}
               <div className="space-y-2">
-                <Label className="text-xs text-neutral-600">Customer</Label>
+                <Label className="text-xs text-neutral-600">{t("sales.customer")}</Label>
                 <Select value={selectedCustomerFilter} onValueChange={setSelectedCustomerFilter}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All customers" />
+                    <SelectValue placeholder={t("sales.allCustomers")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All customers</SelectItem>
+                    <SelectItem value="all">{t("sales.allCustomers")}</SelectItem>
                     {customers.map((customer) => (
                       <SelectItem key={customer.id} value={customer.id}>
                         {customer.name}
@@ -905,16 +830,15 @@ export default function SalesHistoryPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {/* Status Filter */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2 bg-transparent">
-                    Status
+                    {t("sales.status")}
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
-                  <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t("sales.filterByStatus")}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuCheckboxItem
                     checked={statusFilters.includes("paid")}
@@ -922,7 +846,7 @@ export default function SalesHistoryPage() {
                       setStatusFilters(checked ? [...statusFilters, "paid"] : statusFilters.filter((s) => s !== "paid"))
                     }}
                   >
-                    Paid
+                    {t("sales.paid")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={statusFilters.includes("pending")}
@@ -932,7 +856,7 @@ export default function SalesHistoryPage() {
                       )
                     }}
                   >
-                    Pending
+                    {t("sales.pending")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={statusFilters.includes("partial")}
@@ -942,7 +866,7 @@ export default function SalesHistoryPage() {
                       )
                     }}
                   >
-                    Partial
+                    {t("sales.partial")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={statusFilters.includes("cancelled")}
@@ -952,21 +876,20 @@ export default function SalesHistoryPage() {
                       )
                     }}
                   >
-                    Cancelled
+                    {t("sales.cancelled")}
                   </DropdownMenuCheckboxItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Payment Type Filter */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2 bg-transparent">
-                    Payment Type
+                    {t("sales.paymentType")}
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
-                  <DropdownMenuLabel>Filter by Payment</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t("sales.filterByPayment")}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuCheckboxItem
                     checked={paymentFilters.includes("cash")}
@@ -976,7 +899,7 @@ export default function SalesHistoryPage() {
                       )
                     }}
                   >
-                    Cash
+                    {t("sales.cash")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={paymentFilters.includes("credit")}
@@ -986,7 +909,7 @@ export default function SalesHistoryPage() {
                       )
                     }}
                   >
-                    Credit
+                    {t("sales.credit")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={paymentFilters.includes("debit")}
@@ -996,7 +919,7 @@ export default function SalesHistoryPage() {
                       )
                     }}
                   >
-                    Debit
+                    {t("sales.debit")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={paymentFilters.includes("transfer")}
@@ -1006,7 +929,7 @@ export default function SalesHistoryPage() {
                       )
                     }}
                   >
-                    Transfer
+                    {t("sales.transfer")}
                   </DropdownMenuCheckboxItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -1031,7 +954,7 @@ export default function SalesHistoryPage() {
             </div>
           ) : filteredSales.length === 0 ? (
             <div className="text-center py-8 text-neutral-600">
-              {sales.length === 0 ? "No sales yet. Create your first sale!" : "No sales match your filters."}
+              {sales.length === 0 ? t("sales.noSalesYet") : t("sales.noSalesMatch")}
             </div>
           ) : (
             <div className="overflow-x-auto -mx-2 sm:mx-0">
@@ -1040,25 +963,25 @@ export default function SalesHistoryPage() {
                   <thead>
                     <tr className="border-b border-neutral-200">
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm whitespace-nowrap">
-                        Date
+                        {t("sales.date")}
                       </th>
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm whitespace-nowrap">
-                        Customer
+                        {t("sales.customer")}
                       </th>
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm whitespace-nowrap">
-                        Items
+                        {t("sales.items")}
                       </th>
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm whitespace-nowrap">
-                        Amount
+                        {t("sales.amount")}
                       </th>
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm whitespace-nowrap">
-                        Payment
+                        {t("sales.payment")}
                       </th>
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm whitespace-nowrap">
-                        Status
+                        {t("sales.status")}
                       </th>
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm whitespace-nowrap">
-                        Actions
+                        {t("sales.actions")}
                       </th>
                     </tr>
                   </thead>
@@ -1079,10 +1002,10 @@ export default function SalesHistoryPage() {
                           {new Date(sale.sale_date).toLocaleDateString()}
                         </td>
                         <td className="py-3 sm:py-4 px-2 sm:px-4 font-medium text-xs sm:text-sm text-neutral-900 group-hover:text-white transition-colors whitespace-nowrap">
-                          {sale.customers?.name || "Walk-in"}
+                          {sale.customers?.name || t("sales.walkIn")}
                         </td>
                         <td className="py-3 sm:py-4 px-2 sm:px-4 text-xs sm:text-sm text-neutral-600 group-hover:text-neutral-300 transition-colors whitespace-nowrap">
-                          {sale.sale_items?.length || 0} items
+                          {sale.sale_items?.length || 0} {t("sales.items")}
                         </td>
                         <td className="py-3 sm:py-4 px-2 sm:px-4 font-semibold text-xs sm:text-sm text-neutral-900 group-hover:text-white transition-colors whitespace-nowrap">
                           ${sale.total_amount.toFixed(2)}
@@ -1091,7 +1014,7 @@ export default function SalesHistoryPage() {
                           {sale.payment_type}
                           {sale.payment_type === "credit" && sale.paid_installments !== undefined && (
                             <span className="block text-xs text-neutral-500 group-hover:text-neutral-400">
-                              {sale.paid_installments}/{sale.total_installments} paid
+                              {sale.paid_installments}/{sale.total_installments} {t("sales.paid")}
                             </span>
                           )}
                         </td>
@@ -1107,7 +1030,7 @@ export default function SalesHistoryPage() {
                                     : "bg-red-100 text-red-700 group-hover:bg-red-200"
                             }`}
                           >
-                            {sale.status}
+                            {t(`sales.${sale.status}`)}
                           </span>
                         </td>
                         <td className="py-3 sm:py-4 px-2 sm:px-4 whitespace-nowrap">

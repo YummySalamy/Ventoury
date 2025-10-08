@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { sidebarItems } from "./sidebar-items"
 import { NavItemComponent } from "./nav-item"
+import { useTranslation } from "@/hooks/useTranslation"
 
 const SidebarContext = createContext({ isCollapsed: false })
 
@@ -20,6 +21,7 @@ export function Sidebar({ isMobileMenuOpen = false, setIsMobileMenuOpen }: Sideb
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
+  const { t } = useTranslation()
 
   useEffect(() => {
     const checkMobile = () => {
@@ -83,7 +85,7 @@ export function Sidebar({ isMobileMenuOpen = false, setIsMobileMenuOpen }: Sideb
             }`}
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />
-            {!isCollapsed && <span className="font-medium">Logout</span>}
+            {!isCollapsed && <span className="font-medium">{t("common.logout")}</span>}
           </button>
         </div>
       </motion.aside>
@@ -124,7 +126,7 @@ export function Sidebar({ isMobileMenuOpen = false, setIsMobileMenuOpen }: Sideb
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-neutral-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium">Logout</span>
+            <span className="font-medium">{t("common.logout")}</span>
           </button>
         </div>
       </motion.aside>

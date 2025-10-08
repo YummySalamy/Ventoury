@@ -32,10 +32,12 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCategories } from "@/hooks/useCategories"
 import { useToast } from "@/hooks/use-toast"
+import { useTranslation } from "@/hooks/useTranslation"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 
 export default function CategoriesPage() {
+  const { t } = useTranslation()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<any>(null)
   const [formData, setFormData] = useState({
@@ -186,9 +188,10 @@ export default function CategoriesPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
             <h1 className="text-4xl font-bold text-neutral-900">
-              Categories <span className="italic font-light text-neutral-600">Management</span>
+              {t("categories.title")}{" "}
+              <span className="italic font-light text-neutral-600">{t("categories.subtitle")}</span>
             </h1>
-            <p className="text-neutral-600 mt-2">Organize products with categories and subcategories</p>
+            <p className="text-neutral-600 mt-2">{t("categories.description")}</p>
           </div>
 
           <Dialog
@@ -213,20 +216,22 @@ export default function CategoriesPage() {
             <DialogTrigger asChild>
               <Button className="bg-neutral-900 hover:bg-neutral-800">
                 <Plus className="w-4 h-4 mr-2" />
-                Add Category
+                {t("categories.addCategory")}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingCategory ? "Edit" : "Add New"} Category</DialogTitle>
+                <DialogTitle>
+                  {editingCategory ? t("categories.editCategory") : t("categories.addCategory")}
+                </DialogTitle>
                 <DialogDescription>
-                  {editingCategory ? "Update category information" : "Create a new product category"}
+                  {editingCategory ? t("categories.description") : t("categories.description")}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit}>
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
-                    <Label>Category Image (optional)</Label>
+                    <Label>{t("categories.categoryImage")}</Label>
                     <div className="flex items-center gap-4">
                       {imagePreview ? (
                         <div className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-neutral-200">
@@ -249,16 +254,16 @@ export default function CategoriesPage() {
                       )}
                       <div className="flex-1">
                         <Input type="file" accept="image/*" onChange={handleImageChange} className="cursor-pointer" />
-                        <p className="text-xs text-neutral-500 mt-1">PNG, JPG up to 5MB</p>
+                        <p className="text-xs text-neutral-500 mt-1">{t("products.imageFormat")}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="categoryName">Category Name *</Label>
+                    <Label htmlFor="categoryName">{t("categories.categoryName")} *</Label>
                     <Input
                       id="categoryName"
-                      placeholder="Enter category name"
+                      placeholder={t("categories.categoryNamePlaceholder")}
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
@@ -266,18 +271,18 @@ export default function CategoriesPage() {
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description">{t("categories.description")}</Label>
                     <textarea
                       id="description"
                       className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      placeholder="Category description"
+                      placeholder={t("categories.descriptionPlaceholder")}
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     />
                   </div>
 
                   <div className="grid gap-2">
-                    <Label>Parent Category (optional)</Label>
+                    <Label>{t("categories.parentCategory")}</Label>
                     <Select
                       value={formData.parent_id || "none"}
                       onValueChange={(value) =>
@@ -285,10 +290,10 @@ export default function CategoriesPage() {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="None (Top Level)" />
+                        <SelectValue placeholder={t("categories.noneTopLevel")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">None (Top Level)</SelectItem>
+                        <SelectItem value="none">{t("categories.noneTopLevel")}</SelectItem>
                         {parentCategories
                           .filter((c) => c.id !== editingCategory?.id)
                           .map((cat) => (
@@ -298,11 +303,11 @@ export default function CategoriesPage() {
                           ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-neutral-500">Select a parent to create a subcategory</p>
+                    <p className="text-xs text-neutral-500">{t("categories.parentCategoryHelp")}</p>
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="color">Category Color</Label>
+                    <Label htmlFor="color">{t("categories.categoryColor")}</Label>
                     <div className="flex items-center gap-3">
                       <input
                         type="color"
@@ -318,7 +323,7 @@ export default function CategoriesPage() {
                         className="flex-1"
                       />
                     </div>
-                    <p className="text-xs text-neutral-500">Used for badges and marketplace filters</p>
+                    <p className="text-xs text-neutral-500">{t("categories.categoryColorHelp")}</p>
                   </div>
 
                   <div className="flex items-center space-x-2 p-4 rounded-lg bg-neutral-50 border border-neutral-200">
@@ -331,26 +336,26 @@ export default function CategoriesPage() {
                     />
                     <div className="flex-1">
                       <label htmlFor="marketplace" className="text-sm font-medium cursor-pointer">
-                        Show in Marketplace
+                        {t("categories.showInMarketplace")}
                       </label>
-                      <p className="text-xs text-neutral-500">Display this category in your public store</p>
+                      <p className="text-xs text-neutral-500">{t("categories.showInMarketplaceDesc")}</p>
                     </div>
                   </div>
                 </div>
                 <div className="flex justify-end gap-3">
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isCreating}>
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                   <Button type="submit" className="bg-neutral-900 hover:bg-neutral-800" disabled={isCreating}>
                     {isCreating ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        {editingCategory ? "Updating..." : "Creating..."}
+                        {editingCategory ? t("categories.updating") : t("categories.creating")}
                       </>
                     ) : editingCategory ? (
-                      "Update Category"
+                      t("categories.updateCategory")
                     ) : (
-                      "Create Category"
+                      t("categories.createCategory")
                     )}
                   </Button>
                 </div>
@@ -366,7 +371,7 @@ export default function CategoriesPage() {
                 <Tag className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-sm text-neutral-600">Total Categories</p>
+                <p className="text-sm text-neutral-600">{t("categories.totalCategories")}</p>
                 <p className="text-2xl font-bold text-neutral-900">{totalCategories}</p>
               </div>
             </div>
@@ -377,7 +382,7 @@ export default function CategoriesPage() {
                 <Package className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-sm text-neutral-600">Total Products</p>
+                <p className="text-sm text-neutral-600">{t("categories.totalProducts")}</p>
                 <p className="text-2xl font-bold text-neutral-900">{totalProducts}</p>
               </div>
             </div>
@@ -388,7 +393,7 @@ export default function CategoriesPage() {
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-sm text-neutral-600">Total Value</p>
+                <p className="text-sm text-neutral-600">{t("categories.totalValue")}</p>
                 <p className="text-2xl font-bold text-neutral-900">${totalValue.toFixed(2)}</p>
               </div>
             </div>
@@ -400,7 +405,7 @@ export default function CategoriesPage() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
               <Input
-                placeholder="Search categories..."
+                placeholder={t("categories.searchPlaceholder")}
                 className="pl-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -413,7 +418,7 @@ export default function CategoriesPage() {
           <GlassCard>
             <div className="text-center py-12">
               <div className="w-12 h-12 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-neutral-600">Loading categories...</p>
+              <p className="text-neutral-600">{t("categories.loadingCategories")}</p>
             </div>
           </GlassCard>
         )}
@@ -421,7 +426,9 @@ export default function CategoriesPage() {
         {error && (
           <GlassCard>
             <div className="text-center py-12">
-              <p className="text-red-600">Error: {error}</p>
+              <p className="text-red-600">
+                {t("common.error")}: {error}
+              </p>
             </div>
           </GlassCard>
         )}
@@ -432,9 +439,7 @@ export default function CategoriesPage() {
               <div className="col-span-full">
                 <GlassCard>
                   <div className="text-center py-12 text-neutral-600">
-                    {searchQuery
-                      ? "No categories match your search."
-                      : "No categories yet. Create your first category to get started!"}
+                    {searchQuery ? t("categories.noMatch") : t("categories.noCategories")}
                   </div>
                 </GlassCard>
               </div>
@@ -471,7 +476,7 @@ export default function CategoriesPage() {
                         {category.subcategories && category.subcategories.length > 0 && (
                           <button
                             onClick={() => toggleExpanded(category.id)}
-                            className="p-1 hover:bg-neutral-100 rounded transition-colors"
+                            className="p-1 hover:bg-neutral-100 rounded-lg transition-colors"
                           >
                             {expandedCategories.has(category.id) ? (
                               <ChevronDown className="w-4 h-4 text-neutral-600" />
@@ -505,7 +510,7 @@ export default function CategoriesPage() {
                       <h3 className="text-xl font-bold text-neutral-900 flex-1">{category.name}</h3>
                       {category.show_in_marketplace && (
                         <Badge variant="secondary" className="text-xs">
-                          Marketplace
+                          {t("categories.marketplace")}
                         </Badge>
                       )}
                     </div>
@@ -514,17 +519,17 @@ export default function CategoriesPage() {
                     )}
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-neutral-600">Products</span>
+                        <span className="text-neutral-600">{t("categories.products")}</span>
                         <span className="font-semibold text-neutral-900">{category.product_count || 0}</span>
                       </div>
                       {category.subcategories && category.subcategories.length > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-neutral-600">Subcategories</span>
+                          <span className="text-neutral-600">{t("categories.subcategories")}</span>
                           <span className="font-semibold text-neutral-900">{category.subcategories.length}</span>
                         </div>
                       )}
                       <div className="flex justify-between text-sm">
-                        <span className="text-neutral-600">Total Value</span>
+                        <span className="text-neutral-600">{t("categories.totalValue")}</span>
                         <span className="font-semibold text-neutral-900">
                           ${(category.total_value || 0).toFixed(2)}
                         </span>
@@ -535,7 +540,9 @@ export default function CategoriesPage() {
                       category.subcategories &&
                       category.subcategories.length > 0 && (
                         <div className="mt-4 pt-4 border-t border-neutral-200 space-y-2">
-                          <p className="text-xs font-semibold text-neutral-500 uppercase">Subcategories</p>
+                          <p className="text-xs font-semibold text-neutral-500 uppercase">
+                            {t("categories.subcategoriesLabel")}
+                          </p>
                           {category.subcategories.map((sub) => (
                             <div
                               key={sub.id}
@@ -549,7 +556,9 @@ export default function CategoriesPage() {
                                 <span className="text-sm font-medium text-neutral-700">{sub.name}</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-neutral-500">{sub.product_count || 0} products</span>
+                                <span className="text-xs text-neutral-500">
+                                  {sub.product_count || 0} {t("categories.products").toLowerCase()}
+                                </span>
                                 <button
                                   onClick={() => handleEdit(sub)}
                                   className="p-1 hover:bg-neutral-200 rounded transition-colors"
