@@ -18,25 +18,25 @@ const openSans = Open_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "Ventoury - Plan Your Dream Adventure",
+  title: "Ventoury - Business Management Platform",
   description:
-    "Discover, plan, and book unforgettable travel experiences with AI-powered recommendations tailored just for you.",
+    "Manage your inventory, sales, customers, and business operations with Ventoury. A comprehensive platform for modern businesses.",
   generator: "v0.app",
   alternates: {
     canonical: "https://ventoury.app/",
   },
   openGraph: {
     siteName: "Ventoury",
-    title: "Ventoury — AI-Powered Travel Planning",
-    description: "Discover, plan, and book unforgettable travel experiences with AI-powered recommendations.",
+    title: "Ventoury — Business Management Platform",
+    description: "Manage your inventory, sales, customers, and business operations with Ventoury.",
     type: "website",
     url: "https://ventoury.app/",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Ventoury — AI-Powered Travel Planning",
-    description: "Discover, plan, and book unforgettable travel experiences with AI-powered recommendations.",
+    title: "Ventoury — Business Management Platform",
+    description: "Manage your inventory, sales, customers, and business operations with Ventoury.",
     site: "@ventoury",
   },
 }

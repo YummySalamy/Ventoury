@@ -833,7 +833,7 @@ export default function SalesHistoryPage() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2 bg-transparent">
-                    {t("sales.status")}
+                    {t("sales.statusLabel")}
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -846,7 +846,7 @@ export default function SalesHistoryPage() {
                       setStatusFilters(checked ? [...statusFilters, "paid"] : statusFilters.filter((s) => s !== "paid"))
                     }}
                   >
-                    {t("sales.paid")}
+                    {t("sales.status.paid")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={statusFilters.includes("pending")}
@@ -856,7 +856,7 @@ export default function SalesHistoryPage() {
                       )
                     }}
                   >
-                    {t("sales.pending")}
+                    {t("sales.status.pending")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={statusFilters.includes("partial")}
@@ -866,7 +866,7 @@ export default function SalesHistoryPage() {
                       )
                     }}
                   >
-                    {t("sales.partial")}
+                    {t("sales.status.partial")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={statusFilters.includes("cancelled")}
@@ -876,7 +876,7 @@ export default function SalesHistoryPage() {
                       )
                     }}
                   >
-                    {t("sales.cancelled")}
+                    {t("sales.status.cancelled")}
                   </DropdownMenuCheckboxItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -884,7 +884,7 @@ export default function SalesHistoryPage() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2 bg-transparent">
-                    {t("sales.paymentType")}
+                    {t("sales.paymentTypeFilter")}
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -899,7 +899,7 @@ export default function SalesHistoryPage() {
                       )
                     }}
                   >
-                    {t("sales.cash")}
+                    {t("sales.paymentType.cash")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={paymentFilters.includes("credit")}
@@ -909,7 +909,7 @@ export default function SalesHistoryPage() {
                       )
                     }}
                   >
-                    {t("sales.credit")}
+                    {t("sales.paymentType.credit")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={paymentFilters.includes("debit")}
@@ -919,7 +919,7 @@ export default function SalesHistoryPage() {
                       )
                     }}
                   >
-                    {t("sales.debit")}
+                    {t("sales.paymentType.debit")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={paymentFilters.includes("transfer")}
@@ -929,7 +929,7 @@ export default function SalesHistoryPage() {
                       )
                     }}
                   >
-                    {t("sales.transfer")}
+                    {t("sales.paymentType.transfer")}
                   </DropdownMenuCheckboxItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -978,7 +978,7 @@ export default function SalesHistoryPage() {
                         {t("sales.payment")}
                       </th>
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm whitespace-nowrap">
-                        {t("sales.status")}
+                        {t("sales.statusLabel")}
                       </th>
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm whitespace-nowrap">
                         {t("sales.actions")}
@@ -1011,10 +1011,10 @@ export default function SalesHistoryPage() {
                           ${sale.total_amount.toFixed(2)}
                         </td>
                         <td className="py-3 sm:py-4 px-2 sm:px-4 text-xs sm:text-sm text-neutral-600 group-hover:text-neutral-300 transition-colors whitespace-nowrap capitalize">
-                          {sale.payment_type}
+                          {t(`sales.paymentType.${sale.payment_type}`)}
                           {sale.payment_type === "credit" && sale.paid_installments !== undefined && (
                             <span className="block text-xs text-neutral-500 group-hover:text-neutral-400">
-                              {sale.paid_installments}/{sale.total_installments} {t("sales.paid")}
+                              {sale.paid_installments}/{sale.total_installments} {t("sales.status.paid")}
                             </span>
                           )}
                         </td>
@@ -1030,7 +1030,7 @@ export default function SalesHistoryPage() {
                                     : "bg-red-100 text-red-700 group-hover:bg-red-200"
                             }`}
                           >
-                            {t(`sales.${sale.status}`)}
+                            {t(`sales.status.${sale.status}`)}
                           </span>
                         </td>
                         <td className="py-3 sm:py-4 px-2 sm:px-4 whitespace-nowrap">

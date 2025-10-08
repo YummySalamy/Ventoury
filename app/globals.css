@@ -2,13 +2,6 @@
 @import "tw-animate-css";
 
 :root {
-  /* Ventoury Travel Theme Colors */
-  --ocean-blue: #0a2463;
-  --coral: #ff6b6b;
-  --sand: #f4e4c1;
-  --white: #ffffff;
-  --charcoal: #2d3142;
-
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -82,13 +75,6 @@
 @theme inline {
   --font-sans: var(--font-inter);
   --font-body: var(--font-open-sans);
-
-  /* Ventoury Color System */
-  --color-ocean-blue: #0a2463;
-  --color-coral: #ff6b6b;
-  --color-sand: #f4e4c1;
-  --color-white: #ffffff;
-  --color-charcoal: #2d3142;
 
   /* Spacing Scale */
   --space-1: 8px;
@@ -180,17 +166,17 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--color-charcoal);
+    background: hsl(var(--muted-foreground));
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-ocean-blue);
+    background: hsl(var(--foreground));
   }
 
   /* Focus management for accessibility */
   .focus-visible {
-    @apply outline-2 outline-offset-2 outline-[#0A2463];
+    @apply outline-2 outline-offset-2 outline-primary;
   }
 
   /* Add cursor pointer to all buttons globally */
