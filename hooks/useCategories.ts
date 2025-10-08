@@ -10,14 +10,16 @@ export interface Category {
   name: string
   description?: string
   icon?: string
+  image_url?: string
+  color?: string
+  parent_id?: string
+  show_in_marketplace: boolean
   is_active: boolean
   created_at: string
   updated_at: string
-}
-
-export interface CategoryStats {
-  product_count: number
-  total_value: number
+  product_count?: number
+  total_value?: number
+  subcategories?: Category[]
 }
 
 export function useCategories() {
@@ -33,12 +35,9 @@ export function useCategories() {
     setError(null)
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from("categories")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .order("name", { ascending: true })
+      const { data, error: fetchError } = await supabase.rpc("get_categories_with_counts", {
+        user_uuid: user.id,
+      })
 
       if (fetchError) throw fetchError
 
@@ -67,7 +66,7 @@ export function useCategories() {
 
       if (createError) throw createError
 
-      setCategories((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+      await fetchCategories()
       return { data, error: null }
     } catch (err: any) {
       return { data: null, error: err.message }
@@ -91,7 +90,7 @@ export function useCategories() {
 
       if (updateError) throw updateError
 
-      setCategories((prev) => prev.map((c) => (c.id === categoryId ? data : c)))
+      await fetchCategories()
       return { data, error: null }
     } catch (err: any) {
       return { data: null, error: err.message }
@@ -123,23 +122,31 @@ export function useCategories() {
 
       if (deleteError) throw deleteError
 
-      setCategories((prev) => prev.filter((c) => c.id !== categoryId))
+      await fetchCategories()
       return { error: null }
     } catch (err: any) {
       return { error: err.message }
     }
   }
 
-  const getCategoryStats = async (categoryId: string): Promise<CategoryStats | null> => {
-    try {
-      const { data, error } = await supabase.rpc("get_category_stats", {
-        category_uuid: categoryId,
-      })
+  const uploadCategoryImage = async (file: File): Promise<string | null> => {
+    if (!user) return null
 
-      if (error) throw error
-      return data[0] || { product_count: 0, total_value: 0 }
+    try {
+      const fileExt = file.name.split(".").pop()
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage.from("category-images").upload(fileName, file)
+
+      if (uploadError) throw uploadError
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("category-images").getPublicUrl(fileName)
+
+      return publicUrl
     } catch (err) {
-      console.error("Error fetching category stats:", err)
+      console.error("Error uploading image:", err)
       return null
     }
   }
@@ -158,16 +165,8 @@ export function useCategories() {
           table: "categories",
           filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            setCategories((prev) => [...prev, payload.new as Category].sort((a, b) => a.name.localeCompare(b.name)))
-          } else if (payload.eventType === "UPDATE") {
-            setCategories((prev) =>
-              prev.map((c) => (c.id === (payload.new as Category).id ? (payload.new as Category) : c)),
-            )
-          } else if (payload.eventType === "DELETE") {
-            setCategories((prev) => prev.filter((c) => c.id !== (payload.old as Category).id))
-          }
+        () => {
+          fetchCategories()
         },
       )
       .subscribe()
@@ -175,7 +174,7 @@ export function useCategories() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user])
+  }, [user, fetchCategories])
 
   useEffect(() => {
     if (user) {
@@ -191,6 +190,6 @@ export function useCategories() {
     createCategory,
     updateCategory,
     deleteCategory,
-    getCategoryStats,
+    uploadCategoryImage,
   }
 }

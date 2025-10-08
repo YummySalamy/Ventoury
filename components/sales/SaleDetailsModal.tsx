@@ -4,9 +4,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { MessageCircle, Package, User, Calendar, DollarSign, Loader2, CheckCircle2 } from "lucide-react"
+import { MessageCircle, Package, User, Calendar, DollarSign, Loader2, CheckCircle2, Share2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
+import { ShareInvoiceModal } from "./ShareInvoiceModal"
 import type { Installment } from "@/hooks/useInstallments"
 
 interface SaleDetailsModalProps {
@@ -19,6 +20,7 @@ export function SaleDetailsModal({ sale, open, onClose }: SaleDetailsModalProps)
   const [installments, setInstallments] = useState<Installment[]>([])
   const [loadingInstallments, setLoadingInstallments] = useState(false)
   const [payingInstallment, setPayingInstallment] = useState<string | null>(null)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -59,7 +61,6 @@ export function SaleDetailsModal({ sale, open, onClose }: SaleDetailsModalProps)
 
       if (error) throw error
 
-      // Refresh installments list
       const { data } = await supabase
         .from("installment_payments")
         .select("*")
@@ -123,258 +124,272 @@ export function SaleDetailsModal({ sale, open, onClose }: SaleDetailsModalProps)
   const overdueCount = installments.filter((i) => i.status === "late").length
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="px-4 sm:px-6 pt-6 pb-4 border-b shrink-0">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <DialogTitle className="text-xl sm:text-2xl">Sale Details - {sale.sale_number}</DialogTitle>
-            <Badge className={statusConfig[sale.status]?.color}>{statusConfig[sale.status]?.label}</Badge>
-          </div>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="px-4 sm:px-6 pt-6 pb-4 border-b shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <DialogTitle className="text-xl sm:text-2xl">Sale Details - {sale.sale_number}</DialogTitle>
+              <div className="flex items-center gap-2">
+                <Badge className={statusConfig[sale.status]?.color}>{statusConfig[sale.status]?.label}</Badge>
+                <Button size="sm" variant="outline" onClick={() => setShareModalOpen(true)} className="gap-2">
+                  <Share2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Share Invoice</span>
+                </Button>
+              </div>
+            </div>
+          </DialogHeader>
 
-        <div className="overflow-y-auto flex-1 px-4 sm:px-6 py-4">
-          <div className="space-y-6">
-            {/* Sale Info */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-neutral-500 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs text-neutral-500">Date</p>
-                  <p className="font-medium text-sm truncate">{new Date(sale.sale_date).toLocaleDateString()}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-neutral-500 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs text-neutral-500">Total</p>
-                  <p className="font-medium text-sm truncate">${sale.total_amount.toFixed(2)}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Package className="h-4 w-4 text-neutral-500 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs text-neutral-500">Payment</p>
-                  <p className="font-medium text-sm capitalize truncate">{sale.payment_type}</p>
-                </div>
-              </div>
-              {sale.customers && (
+          <div className="overflow-y-auto flex-1 px-4 sm:px-6 py-4">
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-neutral-500 shrink-0" />
+                  <Calendar className="h-4 w-4 text-neutral-500 shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-xs text-neutral-500">Customer</p>
-                    <p className="font-medium text-sm truncate">{sale.customers.name}</p>
+                    <p className="text-xs text-neutral-500">Date</p>
+                    <p className="font-medium text-sm truncate">{new Date(sale.sale_date).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-neutral-500 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs text-neutral-500">Total</p>
+                    <p className="font-medium text-sm truncate">${sale.total_amount.toFixed(2)}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-neutral-500 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs text-neutral-500">Payment</p>
+                    <p className="font-medium text-sm capitalize truncate">{sale.payment_type}</p>
+                  </div>
+                </div>
+                {sale.customers && (
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-neutral-500 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-neutral-500">Customer</p>
+                      <p className="font-medium text-sm truncate">{sale.customers.name}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {sale.customers && (
+                <div className="border rounded-lg p-3 sm:p-4 bg-neutral-50">
+                  <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
+                    <User className="h-4 w-4 sm:h-5 sm:w-5" />
+                    Customer Information
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs text-neutral-500">Name</p>
+                      <p className="font-medium text-sm truncate">{sale.customers.name}</p>
+                    </div>
+                    {sale.customers.email && (
+                      <div className="min-w-0">
+                        <p className="text-xs text-neutral-500">Email</p>
+                        <p className="font-medium text-sm truncate">{sale.customers.email}</p>
+                      </div>
+                    )}
+                    {sale.customers.phone && (
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs text-neutral-500">Phone</p>
+                          <p className="font-medium text-sm truncate">{sale.customers.phone}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={openWhatsApp}
+                          className="text-green-600 bg-transparent hover:bg-green-50 shrink-0"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Customer Info */}
-            {sale.customers && (
-              <div className="border rounded-lg p-3 sm:p-4 bg-neutral-50">
+              <div className="border rounded-lg p-3 sm:p-4">
                 <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
-                  <User className="h-4 w-4 sm:h-5 sm:w-5" />
-                  Customer Information
+                  <Package className="h-4 w-4 sm:h-5 sm:w-5" />
+                  Products
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs text-neutral-500">Name</p>
-                    <p className="font-medium text-sm truncate">{sale.customers.name}</p>
-                  </div>
-                  {sale.customers.email && (
-                    <div className="min-w-0">
-                      <p className="text-xs text-neutral-500">Email</p>
-                      <p className="font-medium text-sm truncate">{sale.customers.email}</p>
+                <div className="space-y-2">
+                  {sale.sale_items?.map((item: any, index: number) => (
+                    <div key={index} className="flex items-center gap-2 sm:gap-3 p-2 bg-neutral-50 rounded">
+                      {item.products?.image_url && (
+                        <img
+                          src={item.products.image_url || "/placeholder.svg"}
+                          alt={item.product_name}
+                          className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded shrink-0"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{item.product_name}</p>
+                        <p className="text-xs sm:text-sm text-neutral-600">
+                          {item.quantity} x ${item.unit_price.toFixed(2)}
+                        </p>
+                      </div>
+                      <p className="font-semibold text-sm sm:text-base shrink-0">${item.subtotal.toFixed(2)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {sale.payment_type === "credit" && (
+                <div className="border rounded-lg p-3 sm:p-4 bg-gradient-to-br from-neutral-50 to-neutral-100">
+                  <h3 className="font-semibold mb-4 text-base sm:text-lg">Installment Payments</h3>
+
+                  {!loadingInstallments && installments.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
+                      <div className="relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm border border-green-200/50 p-3 sm:p-4 shadow-sm">
+                        <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-600/10" />
+                        <div className="relative">
+                          <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                            <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+                            <p className="text-[10px] sm:text-xs font-medium text-green-700">Paid</p>
+                          </div>
+                          <p className="text-xl sm:text-3xl font-bold text-green-900">{paidCount}</p>
+                        </div>
+                      </div>
+
+                      <div className="relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm border border-yellow-200/50 p-3 sm:p-4 shadow-sm">
+                        <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-amber-600/10" />
+                        <div className="relative">
+                          <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                            <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600" />
+                            <p className="text-[10px] sm:text-xs font-medium text-yellow-700">Pending</p>
+                          </div>
+                          <p className="text-xl sm:text-3xl font-bold text-yellow-900">{pendingCount}</p>
+                        </div>
+                      </div>
+
+                      <div className="relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm border border-red-200/50 p-3 sm:p-4 shadow-sm">
+                        <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-rose-600/10" />
+                        <div className="relative">
+                          <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
+                            <p className="text-[10px] sm:text-xs font-medium text-red-700">Overdue</p>
+                          </div>
+                          <p className="text-xl sm:text-3xl font-bold text-red-900">{overdueCount}</p>
+                        </div>
+                      </div>
                     </div>
                   )}
-                  {sale.customers.phone && (
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-neutral-500">Phone</p>
-                        <p className="font-medium text-sm truncate">{sale.customers.phone}</p>
+
+                  {loadingInstallments ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className="h-12 w-full" />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto -mx-3 sm:-mx-4">
+                      <div className="inline-block min-w-full align-middle px-3 sm:px-4">
+                        <table className="min-w-full divide-y divide-neutral-200">
+                          <thead>
+                            <tr>
+                              <th className="text-left py-3 px-2 text-xs sm:text-sm font-semibold text-neutral-700 whitespace-nowrap">
+                                #
+                              </th>
+                              <th className="text-left py-3 px-2 text-xs sm:text-sm font-semibold text-neutral-700 whitespace-nowrap">
+                                Amount
+                              </th>
+                              <th className="text-left py-3 px-2 text-xs sm:text-sm font-semibold text-neutral-700 whitespace-nowrap">
+                                Due Date
+                              </th>
+                              <th className="text-left py-3 px-2 text-xs sm:text-sm font-semibold text-neutral-700 whitespace-nowrap">
+                                Status
+                              </th>
+                              <th className="text-left py-3 px-2 text-xs sm:text-sm font-semibold text-neutral-700 whitespace-nowrap">
+                                Paid Date
+                              </th>
+                              <th className="text-left py-3 px-2 text-xs sm:text-sm font-semibold text-neutral-700 whitespace-nowrap">
+                                Action
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-neutral-100">
+                            {installments.map((installment) => {
+                              const daysOverdue =
+                                installment.status === "late" ? getDaysOverdue(installment.due_date) : 0
+                              return (
+                                <tr key={installment.id}>
+                                  <td className="py-3 px-2 font-medium text-sm whitespace-nowrap">
+                                    {installment.payment_number}
+                                  </td>
+                                  <td className="py-3 px-2 font-semibold text-neutral-900 text-sm whitespace-nowrap">
+                                    ${installment.amount.toFixed(2)}
+                                  </td>
+                                  <td className="py-3 px-2 whitespace-nowrap">
+                                    <div>
+                                      <p className="text-xs sm:text-sm">
+                                        {new Date(installment.due_date).toLocaleDateString()}
+                                      </p>
+                                      {daysOverdue > 0 && (
+                                        <p className="text-[10px] sm:text-xs text-red-600 font-medium mt-0.5">
+                                          {daysOverdue}d overdue
+                                        </p>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-2 whitespace-nowrap">
+                                    <Badge className={`text-xs ${installmentStatusConfig[installment.status]?.color}`}>
+                                      {installmentStatusConfig[installment.status]?.label}
+                                    </Badge>
+                                  </td>
+                                  <td className="py-3 px-2 text-xs sm:text-sm text-neutral-600 whitespace-nowrap">
+                                    {installment.paid_date ? new Date(installment.paid_date).toLocaleDateString() : "-"}
+                                  </td>
+                                  <td className="py-3 px-2 whitespace-nowrap">
+                                    {(installment.status === "pending" || installment.status === "late") && (
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleMarkAsPaid(installment.id)}
+                                        disabled={payingInstallment === installment.id}
+                                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm text-xs"
+                                      >
+                                        {payingInstallment === installment.id ? (
+                                          <>
+                                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                            <span className="hidden sm:inline">Processing</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <CheckCircle2 className="mr-1 h-3 w-3" />
+                                            <span className="hidden sm:inline">Mark as Paid</span>
+                                            <span className="sm:hidden">Pay</span>
+                                          </>
+                                        )}
+                                      </Button>
+                                    )}
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={openWhatsApp}
-                        className="text-green-600 bg-transparent hover:bg-green-50 shrink-0"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                      </Button>
                     </div>
                   )}
                 </div>
-              </div>
-            )}
-
-            {/* Products */}
-            <div className="border rounded-lg p-3 sm:p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
-                <Package className="h-4 w-4 sm:h-5 sm:w-5" />
-                Products
-              </h3>
-              <div className="space-y-2">
-                {sale.sale_items?.map((item: any, index: number) => (
-                  <div key={index} className="flex items-center gap-2 sm:gap-3 p-2 bg-neutral-50 rounded">
-                    {item.products?.image_url && (
-                      <img
-                        src={item.products.image_url || "/placeholder.svg"}
-                        alt={item.product_name}
-                        className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded shrink-0"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{item.product_name}</p>
-                      <p className="text-xs sm:text-sm text-neutral-600">
-                        {item.quantity} x ${item.unit_price.toFixed(2)}
-                      </p>
-                    </div>
-                    <p className="font-semibold text-sm sm:text-base shrink-0">${item.subtotal.toFixed(2)}</p>
-                  </div>
-                ))}
-              </div>
+              )}
             </div>
-
-            {/* Installments */}
-            {sale.payment_type === "credit" && (
-              <div className="border rounded-lg p-3 sm:p-4 bg-gradient-to-br from-neutral-50 to-neutral-100">
-                <h3 className="font-semibold mb-4 text-base sm:text-lg">Installment Payments</h3>
-
-                {!loadingInstallments && installments.length > 0 && (
-                  <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
-                    <div className="relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm border border-green-200/50 p-3 sm:p-4 shadow-sm">
-                      <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-600/10" />
-                      <div className="relative">
-                        <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                          <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-                          <p className="text-[10px] sm:text-xs font-medium text-green-700">Paid</p>
-                        </div>
-                        <p className="text-xl sm:text-3xl font-bold text-green-900">{paidCount}</p>
-                      </div>
-                    </div>
-
-                    <div className="relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm border border-yellow-200/50 p-3 sm:p-4 shadow-sm">
-                      <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-amber-600/10" />
-                      <div className="relative">
-                        <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600" />
-                          <p className="text-[10px] sm:text-xs font-medium text-yellow-700">Pending</p>
-                        </div>
-                        <p className="text-xl sm:text-3xl font-bold text-yellow-900">{pendingCount}</p>
-                      </div>
-                    </div>
-
-                    <div className="relative overflow-hidden rounded-xl bg-white/60 backdrop-blur-sm border border-red-200/50 p-3 sm:p-4 shadow-sm">
-                      <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-rose-600/10" />
-                      <div className="relative">
-                        <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                          <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
-                          <p className="text-[10px] sm:text-xs font-medium text-red-700">Overdue</p>
-                        </div>
-                        <p className="text-xl sm:text-3xl font-bold text-red-900">{overdueCount}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {loadingInstallments ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-12 w-full" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto -mx-3 sm:-mx-4">
-                    <div className="inline-block min-w-full align-middle px-3 sm:px-4">
-                      <table className="min-w-full divide-y divide-neutral-200">
-                        <thead>
-                          <tr>
-                            <th className="text-left py-3 px-2 text-xs sm:text-sm font-semibold text-neutral-700 whitespace-nowrap">
-                              #
-                            </th>
-                            <th className="text-left py-3 px-2 text-xs sm:text-sm font-semibold text-neutral-700 whitespace-nowrap">
-                              Amount
-                            </th>
-                            <th className="text-left py-3 px-2 text-xs sm:text-sm font-semibold text-neutral-700 whitespace-nowrap">
-                              Due Date
-                            </th>
-                            <th className="text-left py-3 px-2 text-xs sm:text-sm font-semibold text-neutral-700 whitespace-nowrap">
-                              Status
-                            </th>
-                            <th className="text-left py-3 px-2 text-xs sm:text-sm font-semibold text-neutral-700 whitespace-nowrap">
-                              Paid Date
-                            </th>
-                            <th className="text-left py-3 px-2 text-xs sm:text-sm font-semibold text-neutral-700 whitespace-nowrap">
-                              Action
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-neutral-100">
-                          {installments.map((installment) => {
-                            const daysOverdue = installment.status === "late" ? getDaysOverdue(installment.due_date) : 0
-                            return (
-                              <tr key={installment.id}>
-                                <td className="py-3 px-2 font-medium text-sm whitespace-nowrap">
-                                  {installment.payment_number}
-                                </td>
-                                <td className="py-3 px-2 font-semibold text-neutral-900 text-sm whitespace-nowrap">
-                                  ${installment.amount.toFixed(2)}
-                                </td>
-                                <td className="py-3 px-2 whitespace-nowrap">
-                                  <div>
-                                    <p className="text-xs sm:text-sm">
-                                      {new Date(installment.due_date).toLocaleDateString()}
-                                    </p>
-                                    {daysOverdue > 0 && (
-                                      <p className="text-[10px] sm:text-xs text-red-600 font-medium mt-0.5">
-                                        {daysOverdue}d overdue
-                                      </p>
-                                    )}
-                                  </div>
-                                </td>
-                                <td className="py-3 px-2 whitespace-nowrap">
-                                  <Badge className={`text-xs ${installmentStatusConfig[installment.status]?.color}`}>
-                                    {installmentStatusConfig[installment.status]?.label}
-                                  </Badge>
-                                </td>
-                                <td className="py-3 px-2 text-xs sm:text-sm text-neutral-600 whitespace-nowrap">
-                                  {installment.paid_date ? new Date(installment.paid_date).toLocaleDateString() : "-"}
-                                </td>
-                                <td className="py-3 px-2 whitespace-nowrap">
-                                  {(installment.status === "pending" || installment.status === "late") && (
-                                    <Button
-                                      size="sm"
-                                      onClick={() => handleMarkAsPaid(installment.id)}
-                                      disabled={payingInstallment === installment.id}
-                                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm text-xs"
-                                    >
-                                      {payingInstallment === installment.id ? (
-                                        <>
-                                          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                                          <span className="hidden sm:inline">Processing</span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <CheckCircle2 className="mr-1 h-3 w-3" />
-                                          <span className="hidden sm:inline">Mark as Paid</span>
-                                          <span className="sm:hidden">Pay</span>
-                                        </>
-                                      )}
-                                    </Button>
-                                  )}
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      {sale && (
+        <ShareInvoiceModal
+          saleId={sale.id}
+          saleNumber={sale.sale_number}
+          open={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+        />
+      )}
+    </>
   )
 }

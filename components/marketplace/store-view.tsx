@@ -17,6 +17,7 @@ import { ProductDetailModal } from "./product-detail-modal"
 import { CartSidebar } from "./cart-sidebar"
 import { StoreHeader } from "./store-header"
 import { Footer } from "@/components/landing/footer"
+import { useCart } from "@/contexts/CartContext"
 
 interface Product {
   id: string
@@ -25,7 +26,7 @@ interface Product {
   price: number
   image_url: string
   stock_quantity: number
-  category: string
+  category_id: string | null
 }
 
 interface Business {
@@ -46,7 +47,7 @@ interface Business {
 
 interface StoreData {
   business: Business
-  categories: string[]
+  categories: any[]
   products: Product[]
 }
 
@@ -55,11 +56,14 @@ interface StoreViewProps {
 }
 
 export function StoreView({ storeId }: StoreViewProps) {
-  const [storeData, setStoreData] = useState<StoreData | null>(null)
+  const [storeData, setStoreData] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null)
   const [productModalOpen, setProductModalOpen] = useState(false)
+  const [categories, setCategories] = useState<any[]>([])
+
+  const { setCurrentStoreId } = useCart()
 
   useEffect(() => {
     async function fetchStoreData() {
@@ -73,15 +77,39 @@ export function StoreView({ storeId }: StoreViewProps) {
       }
 
       setStoreData(data)
+      setCurrentStoreId(data.business.id)
+
+      const { data: categoriesData } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("user_id", data.business.id)
+        .eq("show_in_marketplace", true)
+        .eq("is_active", true)
+        .is("parent_id", null)
+        .order("name")
+
+      setCategories(categoriesData || [])
       setLoading(false)
     }
 
     fetchStoreData()
-  }, [storeId])
+  }, [storeId, setCurrentStoreId])
 
-  const handleProductClick = (product: Product) => {
+  const handleProductClick = (product: any) => {
     setSelectedProduct(product)
     setProductModalOpen(true)
+  }
+
+  const getCategoryName = (categoryId: string | null): string => {
+    if (!categoryId) return ""
+    const category = categories.find((c: any) => c.id === categoryId)
+    return category?.name || ""
+  }
+
+  const getCategoryColor = (categoryId: string | null): string => {
+    if (!categoryId) return "#3b82f6"
+    const category = categories.find((c: any) => c.id === categoryId)
+    return category?.color || "#3b82f6"
   }
 
   if (loading) {
@@ -107,9 +135,9 @@ export function StoreView({ storeId }: StoreViewProps) {
     notFound()
   }
 
-  const { business, categories, products } = storeData
+  const { business, products } = storeData
   const filteredProducts =
-    selectedCategory === "all" ? products : products.filter((p) => p.category === selectedCategory)
+    selectedCategory === "all" ? products : products.filter((p: any) => p.category_id === selectedCategory)
 
   return (
     <>
@@ -230,25 +258,53 @@ export function StoreView({ storeId }: StoreViewProps) {
           {categories.length > 0 && (
             <>
               <div className="mb-6">
-                <h3 className="mb-3 text-sm font-semibold text-muted-foreground">Filter by Category</h3>
+                <h3 className="mb-3 text-sm font-semibold text-neutral-600">Browse by Category</h3>
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant={selectedCategory === "all" ? "default" : "outline"}
-                    size="sm"
+                  <button
                     onClick={() => setSelectedCategory("all")}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      selectedCategory === "all"
+                        ? "bg-neutral-900 text-white shadow-lg"
+                        : "backdrop-blur-md bg-white/60 border border-neutral-200 text-neutral-700 hover:bg-white/80"
+                    }`}
                   >
                     All Products
-                  </Button>
-                  {categories.map((category) => (
-                    <Button
-                      key={category}
-                      variant={selectedCategory === category ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedCategory(category)}
-                    >
-                      {category}
-                    </Button>
-                  ))}
+                    <span className="ml-2 text-xs opacity-70">({products.length})</span>
+                  </button>
+                  {categories.map((category: any) => {
+                    const categoryProducts = products.filter((p: any) => p.category_id === category.id)
+                    return (
+                      <button
+                        key={category.id}
+                        onClick={() => setSelectedCategory(category.id)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+                          selectedCategory === category.id
+                            ? "text-white shadow-lg"
+                            : "backdrop-blur-md bg-white/60 border border-neutral-200 text-neutral-700 hover:bg-white/80"
+                        }`}
+                        style={
+                          selectedCategory === category.id
+                            ? {
+                                background: `linear-gradient(135deg, ${category.color || "#3b82f6"}, ${category.color || "#3b82f6"}dd)`,
+                              }
+                            : {}
+                        }
+                      >
+                        {category.image_url && (
+                          <div className="relative w-5 h-5 rounded-full overflow-hidden">
+                            <Image
+                              src={category.image_url || "/placeholder.svg"}
+                              alt={category.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        )}
+                        {category.name}
+                        <span className="text-xs opacity-70">({categoryProducts.length})</span>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
               <Separator className="my-6" />
@@ -257,20 +313,27 @@ export function StoreView({ storeId }: StoreViewProps) {
 
           {/* Products Grid */}
           {filteredProducts.length === 0 ? (
-            <Card className="mx-auto max-w-md">
-              <CardHeader className="text-center">
-                <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <CardTitle>No Products Available</CardTitle>
-                <CardDescription>
-                  {selectedCategory === "all"
-                    ? "This store hasn't listed any products yet."
-                    : "No products in this category."}
-                </CardDescription>
-              </CardHeader>
-            </Card>
+            <div className="col-span-full">
+              <div className="backdrop-blur-md bg-white/60 border border-neutral-200/50 rounded-3xl p-12 text-center shadow-lg">
+                <div className="max-w-md mx-auto">
+                  <div className="mb-6 inline-flex p-4 rounded-full bg-gradient-to-br from-neutral-100 to-neutral-200">
+                    <Package className="h-12 w-12 text-neutral-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-neutral-900 mb-3">
+                    {selectedCategory === "all" ? "No Products Yet" : "Nothing Here"}
+                  </h3>
+                  <p className="text-neutral-600 mb-2">
+                    {selectedCategory === "all"
+                      ? "This store is setting up their catalog."
+                      : "No products available in this category at the moment."}
+                  </p>
+                  <p className="text-sm text-neutral-500 italic">Check back soon for new arrivals</p>
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredProducts.map((product, index) => (
+              {filteredProducts.map((product: any, index: number) => (
                 <motion.div
                   key={product.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -298,9 +361,16 @@ export function StoreView({ storeId }: StoreViewProps) {
                     <CardHeader className="p-4">
                       <div className="mb-2 flex items-start justify-between gap-2">
                         <CardTitle className="line-clamp-2 text-base md:text-lg">{product.name}</CardTitle>
-                        {product.category && (
-                          <Badge variant="outline" className="shrink-0 text-xs">
-                            {product.category}
+                        {product.category_id && (
+                          <Badge
+                            variant="outline"
+                            className="shrink-0 text-xs border-0"
+                            style={{
+                              backgroundColor: `${getCategoryColor(product.category_id)}20`,
+                              color: getCategoryColor(product.category_id),
+                            }}
+                          >
+                            {getCategoryName(product.category_id)}
                           </Badge>
                         )}
                       </div>
@@ -317,7 +387,7 @@ export function StoreView({ storeId }: StoreViewProps) {
                           size="sm"
                           disabled={product.stock_quantity === 0}
                           className="gap-2"
-                          onClick={(e) => {
+                          onClick={(e: any) => {
                             e.stopPropagation()
                             handleProductClick(product)
                           }}

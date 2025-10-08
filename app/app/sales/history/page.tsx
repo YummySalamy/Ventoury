@@ -14,6 +14,7 @@ import {
   Filter,
   Search,
   ChevronDown,
+  Share2,
 } from "lucide-react"
 import { GlassCard } from "@/components/dashboard/glass-card"
 import { Button } from "@/components/ui/button"
@@ -44,6 +45,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { SaleDetailsModal } from "@/components/sales/SaleDetailsModal"
 import { InstallmentHelpDialog } from "@/components/sales/InstallmentHelpDialog"
+import { ShareInvoiceModal } from "@/components/sales/ShareInvoiceModal"
 
 interface CartItem {
   product_id: string
@@ -247,6 +249,22 @@ export default function SalesHistoryPage() {
 
   const [selectedSale, setSelectedSale] = useState<any | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [saleToShare, setSaleToShare] = useState<any | null>(null)
+
+  const handleShareInvoice = (sale: any) => {
+    setSaleToShare(sale)
+    setShareModalOpen(true)
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        title: "Link copied!",
+        description: "Invoice link has been copied to clipboard",
+      })
+    })
+  }
 
   return (
     <div className="p-4 sm:p-6 md:p-8">
@@ -763,9 +781,22 @@ export default function SalesHistoryPage() {
                             <button className="p-1.5 sm:p-2 hover:bg-neutral-800 rounded-lg transition-colors group-hover:text-white">
                               <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
                             </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleShareInvoice(sale)
+                              }}
+                              className="p-1.5 sm:p-2 hover:bg-blue-600 rounded-lg transition-colors text-blue-600 hover:text-white"
+                              title="Share Invoice"
+                            >
+                              <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </button>
                             {sale.payment_type === "credit" && sale.customers?.phone && sale.status !== "paid" && (
                               <button
-                                onClick={() => openWhatsApp(sale.customers.phone, sale.customers.name)}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  openWhatsApp(sale.customers.phone, sale.customers.name)
+                                }}
                                 className="p-1.5 sm:p-2 hover:bg-green-600 rounded-lg transition-colors text-green-600 hover:text-white"
                                 title="Contact via WhatsApp"
                               >
@@ -792,6 +823,18 @@ export default function SalesHistoryPage() {
           setSelectedSale(null)
         }}
       />
+
+      {saleToShare && (
+        <ShareInvoiceModal
+          saleId={saleToShare.id}
+          saleNumber={saleToShare.sale_number}
+          open={shareModalOpen}
+          onClose={() => {
+            setShareModalOpen(false)
+            setSaleToShare(null)
+          }}
+        />
+      )}
     </div>
   )
 }

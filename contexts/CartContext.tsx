@@ -20,29 +20,47 @@ interface CartContextType {
   totalItems: number
   totalPrice: number
   generateWhatsAppMessage: (businessWhatsApp: string, businessName: string) => string
+  currentStoreId: string | null
+  setCurrentStoreId: (storeId: string) => void
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
+  const [currentStoreId, setCurrentStoreId] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
 
-  // Load cart from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem("ventoury-cart")
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted || !currentStoreId) return
+
+    const savedCart = localStorage.getItem(`ventoury-cart-${currentStoreId}`)
     if (savedCart) {
       try {
         setItems(JSON.parse(savedCart))
       } catch (error) {
         console.error("Error loading cart:", error)
       }
+    } else {
+      setItems([])
     }
-  }, [])
+  }, [currentStoreId, mounted])
 
-  // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem("ventoury-cart", JSON.stringify(items))
-  }, [items])
+    if (!mounted || !currentStoreId) return
+    localStorage.setItem(`ventoury-cart-${currentStoreId}`, JSON.stringify(items))
+  }, [items, currentStoreId, mounted])
+
+  const handleSetCurrentStoreId = (storeId: string) => {
+    if (storeId !== currentStoreId) {
+      setItems([])
+      setCurrentStoreId(storeId)
+    }
+  }
 
   const addItem = (item: Omit<CartItem, "quantity"> & { quantity?: number }) => {
     setItems((prev) => {
@@ -99,6 +117,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         totalItems,
         totalPrice,
         generateWhatsAppMessage,
+        currentStoreId,
+        setCurrentStoreId: handleSetCurrentStoreId,
       }}
     >
       {children}

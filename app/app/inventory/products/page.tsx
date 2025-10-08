@@ -417,7 +417,27 @@ export default function ProductsPage() {
           <div className="flex gap-2">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-neutral-900 hover:bg-neutral-800 w-full sm:w-auto">
+                <Button
+                  className="bg-neutral-900 hover:bg-neutral-800 w-full sm:w-auto"
+                  onClick={() => {
+                    setFormData({
+                      name: "",
+                      sku: "",
+                      category_id: "",
+                      price: "",
+                      cost_price: "",
+                      stock_quantity: "",
+                      description: "",
+                      show_in_marketplace: false,
+                      marketplace_order: 0,
+                    })
+                    setCustomFieldsData([])
+                    setCustomData({})
+                    setImageFile(null)
+                    setImagePreview(null)
+                    setPriceSuggestions([])
+                  }}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Product
                 </Button>

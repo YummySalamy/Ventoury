@@ -13,6 +13,12 @@ export interface Customer {
   address?: string
   notes?: string
   is_active: boolean
+  tax_id?: string
+  date_of_birth?: string
+  customer_type?: "individual" | "business"
+  credit_limit?: number
+  discount_percentage?: number
+  discount_type?: "percentage" | "fixed"
   created_at: string
   updated_at: string
 }
@@ -77,6 +83,8 @@ export function useCustomers() {
         .insert({
           ...customerData,
           user_id: user.id,
+          customer_type: customerData.customer_type || "individual",
+          discount_type: customerData.discount_type || "percentage",
         })
         .select()
         .single()
@@ -118,7 +126,6 @@ export function useCustomers() {
     if (!user) throw new Error("User not authenticated")
 
     try {
-      // Check if customer has sales
       const { data: sales } = await supabase.from("sales").select("id").eq("customer_id", customerId).limit(1)
 
       if (sales && sales.length > 0) {
@@ -177,6 +184,33 @@ export function useCustomers() {
     }
   }
 
+  const checkCreditLimit = async (customerId: string, saleAmount: number): Promise<boolean> => {
+    try {
+      const customer = customers.find((c) => c.id === customerId)
+      if (!customer || !customer.credit_limit) return true
+
+      const stats = await getCustomerStats(customerId)
+      if (!stats) return true
+
+      const totalOwed = stats.pending_amount
+      return totalOwed + saleAmount <= customer.credit_limit
+    } catch (err) {
+      console.error("Error checking credit limit:", err)
+      return true
+    }
+  }
+
+  const calculateDiscount = (customerId: string, amount: number): number => {
+    const customer = customers.find((c) => c.id === customerId)
+    if (!customer || !customer.discount_percentage) return 0
+
+    if (customer.discount_type === "percentage") {
+      return (amount * customer.discount_percentage) / 100
+    } else {
+      return customer.discount_percentage
+    }
+  }
+
   useEffect(() => {
     if (!user) return
 
@@ -225,5 +259,7 @@ export function useCustomers() {
     deleteCustomer,
     getCustomerStats,
     getCustomerSalesHistory,
+    checkCreditLimit,
+    calculateDiscount,
   }
 }

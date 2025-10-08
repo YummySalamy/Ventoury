@@ -3,7 +3,7 @@ import { useState } from "react"
 import type React from "react"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { Mail, Lock, User, Building, ArrowRight, ArrowLeft, Check } from "lucide-react"
+import { Mail, Lock, User, Building, ArrowRight, ArrowLeft, Check, Eye, EyeOff, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
@@ -18,28 +18,34 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
   })
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1)
     } else {
       if (formData.password !== formData.confirmPassword) {
-        toast({
-          title: "Passwords don't match",
-          description: "Please make sure your passwords match",
-          variant: "destructive",
-        })
+        setError("Passwords don't match. Please make sure both passwords are identical.")
+        return
+      }
+
+      if (formData.password.length < 8) {
+        setError("Password must be at least 8 characters long.")
         return
       }
 
       setLoading(true)
 
       try {
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error: authError } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
           options: {
@@ -51,9 +57,8 @@ export default function RegisterPage() {
           },
         })
 
-        if (error) throw error
+        if (authError) throw authError
 
-        console.log("[v0] Registration successful:", data.user?.email)
         toast({
           title: "Account created!",
           description: "Please check your email to verify your account.",
@@ -62,17 +67,45 @@ export default function RegisterPage() {
         setTimeout(() => {
           router.push("/auth/login")
         }, 2000)
-      } catch (error: any) {
-        console.error("[v0] Registration error:", error)
-        toast({
-          title: "Registration failed",
-          description: error.message || "Something went wrong",
-          variant: "destructive",
-        })
+      } catch (err: any) {
+        console.error("[v0] Registration error:", err)
+
+        let errorMessage = "An unexpected error occurred. Please try again."
+
+        if (err.message?.includes("already registered") || err.message?.includes("already exists")) {
+          errorMessage = "This email is already registered. Please try signing in instead."
+        } else if (err.message?.includes("invalid email")) {
+          errorMessage = "Please enter a valid email address."
+        } else if (err.message?.includes("weak password")) {
+          errorMessage = "Password is too weak. Please use a stronger password with at least 8 characters."
+        } else if (err.message) {
+          errorMessage = err.message
+        }
+
+        setError(errorMessage)
       } finally {
         setLoading(false)
       }
     }
+  }
+
+  const handleContactSupport = () => {
+    const message = `Hello Ventoury Support,
+
+I'm experiencing an issue while trying to create an account.
+
+Error Details:
+${error || "Unable to complete registration"}
+
+Email: ${formData.email || "Not provided"}
+Name: ${formData.name || "Not provided"}
+Company: ${formData.company || "Not provided"}
+
+Could you please help me resolve this issue?
+
+Thank you!`
+
+    window.open(`https://wa.me/573216371230?text=${encodeURIComponent(message)}`, "_blank")
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,6 +115,7 @@ export default function RegisterPage() {
   const goBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
+      setError(null)
     }
   }
 
@@ -146,6 +180,28 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit}>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative overflow-hidden rounded-xl border border-red-200 bg-red-50/80 backdrop-blur-sm p-4 mb-5"
+            >
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-2">
+                  <p className="text-sm font-medium text-red-900">{error}</p>
+                  <button
+                    type="button"
+                    onClick={handleContactSupport}
+                    className="text-sm font-semibold text-red-700 hover:text-red-800 underline underline-offset-2 transition-colors"
+                  >
+                    Contact Support
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           <AnimatePresence mode="wait">
             {currentStep === 1 && (
               <motion.div
@@ -245,14 +301,21 @@ export default function RegisterPage() {
                     <input
                       id="password"
                       name="password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       value={formData.password}
                       onChange={handleChange}
-                      className="w-full pl-12 pr-4 py-4 bg-white border-2 border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all"
+                      className="w-full pl-12 pr-12 py-4 bg-white border-2 border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all"
                       placeholder="••••••••"
                       required
                       minLength={8}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
                   </div>
                   <p className="text-xs text-neutral-500 mt-2">Must be at least 8 characters</p>
                 </div>
@@ -266,13 +329,20 @@ export default function RegisterPage() {
                     <input
                       id="confirmPassword"
                       name="confirmPassword"
-                      type="password"
+                      type={showConfirmPassword ? "text" : "password"}
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className="w-full pl-12 pr-4 py-4 bg-white border-2 border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all"
+                      className="w-full pl-12 pr-12 py-4 bg-white border-2 border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all"
                       placeholder="••••••••"
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
                   </div>
                 </div>
               </motion.div>
