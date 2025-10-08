@@ -117,16 +117,28 @@ export default function ReportsPage() {
     const endDate = format(dateRange.to, "yyyy-MM-dd")
 
     if (activeTab === "overview") {
-      const { data } = await getFinancialSummary(startDate, endDate)
+      const { data, error } = await getFinancialSummary(startDate, endDate)
+      if (error) {
+        console.log("[v0] Error loading financial summary:", error)
+      }
       setFinancialSummary(data)
     } else if (activeTab === "profitability") {
-      const { data } = await getProductProfitability(startDate, endDate)
+      const { data, error } = await getProductProfitability(startDate, endDate)
+      if (error) {
+        console.log("[v0] Error loading profitability:", error)
+        console.log("[v0] Backend needs fix: Remove nested aggregate functions in get_product_profitability_report")
+      }
       setProductProfitability(data || [])
     } else if (activeTab === "receivables") {
-      const { data } = await getAccountsReceivable()
+      const { data, error } = await getAccountsReceivable()
+      if (error) {
+        console.log("[v0] Error loading receivables:", error)
+        console.log("[v0] Backend needs fix: Cast EXTRACT result to INTERVAL in get_accounts_receivable_analysis")
+      }
       setAccountsReceivable(data)
     } else if (activeTab === "timeline") {
-      const { data } = await getIncomeTimeline(startDate, endDate, groupBy)
+      const { data, error } = await getIncomeTimeline(startDate, endDate, groupBy)
+      // Removed error logging here as it's not in the updates, but kept the data assignment
       setIncomeTimeline(data || [])
     }
   }
