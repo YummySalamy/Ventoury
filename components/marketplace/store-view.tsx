@@ -255,7 +255,7 @@ export function StoreView({ storeId }: StoreViewProps) {
             </Card>
           </div>
 
-          {categories.length > 0 && (
+          {!loading && categories.length > 0 && (
             <>
               <div className="mb-6">
                 <h3 className="mb-3 text-sm font-semibold text-neutral-600">Browse by Category</h3>

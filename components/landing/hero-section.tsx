@@ -33,7 +33,9 @@ export function HeroSection() {
               delay: delay + index * 0.03,
               ease: [0.21, 0.47, 0.32, 0.98],
             }}
-            style={{ display: char === " " ? "inline" : "inline-block" }}
+            style={{
+              display: char === " " ? "inline" : "inline-block",
+            }}
           >
             {char === " " ? "\u00A0" : char}
           </motion.span>

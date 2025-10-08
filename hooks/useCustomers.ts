@@ -15,10 +15,12 @@ export interface Customer {
   is_active: boolean
   tax_id?: string
   date_of_birth?: string
-  customer_type?: "individual" | "business"
+  customer_type?: "regular" | "vip" | "wholesale"
   credit_limit?: number
-  discount_percentage?: number
-  discount_type?: "percentage" | "fixed"
+  discount_value?: number
+  discount_type?: "none" | "percentage" | "fixed"
+  tags?: string[]
+  social_media?: Record<string, string>
   created_at: string
   updated_at: string
 }
@@ -27,46 +29,65 @@ export interface CustomerStats {
   total_purchases: number
   total_spent: number
   pending_amount: number
+  avg_purchase: number
+  first_purchase?: string
+  last_purchase?: string
 }
 
 export interface CustomerWithStats extends Customer {
   stats?: CustomerStats
 }
 
+export interface DashboardStats {
+  total_customers: number
+  total_revenue: number
+  avg_customer_value: number
+}
+
 export function useCustomers() {
   const { user } = useAuth()
-  const [customers, setCustomers] = useState<Customer[]>([])
+  const [customers, setCustomers] = useState<CustomerWithStats[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const getDashboardStats = async (): Promise<DashboardStats | null> => {
+    if (!user) return null
+
+    try {
+      const { data, error } = await supabase.rpc("get_customers_overview", {
+        user_uuid: user.id,
+      })
+
+      if (error) throw error
+      return data || { total_customers: 0, total_revenue: 0, avg_customer_value: 0 }
+    } catch (err) {
+      console.error("Error fetching dashboard stats:", err)
+      return null
+    }
+  }
+
   const fetchCustomers = useCallback(
-    async (search?: string) => {
-      if (!user) return { data: null, error: "Not authenticated" }
+    async (search?: string, offset = 0, limit = 20) => {
+      if (!user) return { data: null, error: "Not authenticated", totalCount: 0 }
 
       setLoading(true)
       setError(null)
 
       try {
-        let query = supabase
-          .from("customers")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("is_active", true)
-          .order("name", { ascending: true })
-
-        if (search) {
-          query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
-        }
-
-        const { data, error: fetchError } = await query
+        const { data, error: fetchError } = await supabase.rpc("get_customers_with_stats", {
+          user_uuid: user.id,
+          search_query: search || null,
+          offset_val: offset,
+          limit_val: limit,
+        })
 
         if (fetchError) throw fetchError
 
-        setCustomers(data || [])
-        return { data, error: null }
+        setCustomers(data?.customers || [])
+        return { data: data?.customers || [], error: null, totalCount: data?.total_count || 0 }
       } catch (err: any) {
         setError(err.message)
-        return { data: null, error: err.message }
+        return { data: null, error: err.message, totalCount: 0 }
       } finally {
         setLoading(false)
       }
@@ -83,8 +104,8 @@ export function useCustomers() {
         .insert({
           ...customerData,
           user_id: user.id,
-          customer_type: customerData.customer_type || "individual",
-          discount_type: customerData.discount_type || "percentage",
+          customer_type: customerData.customer_type || "regular",
+          discount_type: customerData.discount_type || "none",
         })
         .select()
         .single()
@@ -154,7 +175,7 @@ export function useCustomers() {
       })
 
       if (error) throw error
-      return data[0] || { total_purchases: 0, total_spent: 0, pending_amount: 0 }
+      return data || { total_purchases: 0, total_spent: 0, pending_amount: 0, avg_purchase: 0 }
     } catch (err) {
       console.error("Error fetching customer stats:", err)
       return null
@@ -163,19 +184,9 @@ export function useCustomers() {
 
   const getCustomerSalesHistory = async (customerId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("sales")
-        .select(
-          `
-          *,
-          sale_items (
-            *,
-            products (name, sku)
-          )
-        `,
-        )
-        .eq("customer_id", customerId)
-        .order("sale_date", { ascending: false })
+      const { data, error } = await supabase.rpc("get_customer_sales_with_items", {
+        customer_uuid: customerId,
+      })
 
       if (error) throw error
       return { data, error: null }
@@ -202,12 +213,12 @@ export function useCustomers() {
 
   const calculateDiscount = (customerId: string, amount: number): number => {
     const customer = customers.find((c) => c.id === customerId)
-    if (!customer || !customer.discount_percentage) return 0
+    if (!customer || !customer.discount_value || customer.discount_type === "none") return 0
 
     if (customer.discount_type === "percentage") {
-      return (amount * customer.discount_percentage) / 100
+      return (amount * customer.discount_value) / 100
     } else {
-      return customer.discount_percentage
+      return customer.discount_value
     }
   }
 
@@ -254,6 +265,7 @@ export function useCustomers() {
     loading,
     error,
     fetchCustomers,
+    getDashboardStats,
     createCustomer,
     updateCustomer,
     deleteCustomer,
