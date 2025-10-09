@@ -1,5 +1,5 @@
 "use client"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Download,
@@ -13,7 +13,6 @@ import {
   MessageCircle,
   Filter,
   Search,
-  ChevronDown,
   Share2,
   User,
   Package,
@@ -23,6 +22,7 @@ import {
   HelpCircle,
   ImageIcon,
 } from "lucide-react"
+import { FiList as List, FiGrid as Grid } from "react-icons/fi"
 import { GlassCard } from "@/components/dashboard/glass-card"
 import { Button } from "@/components/ui/button"
 import {
@@ -33,17 +33,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SearchableSelect } from "@/components/ui/searchable-select"
 import { useSales } from "@/hooks/useSales"
 import { useCustomers } from "@/hooks/useCustomers"
 import { useProducts } from "@/hooks/useProducts"
@@ -54,7 +47,9 @@ import { SaleDetailsModal } from "@/components/sales/SaleDetailsModal"
 import { InstallmentHelpDialog } from "@/components/sales/InstallmentHelpDialog"
 import { ShareInvoiceModal } from "@/components/sales/ShareInvoiceModal"
 import { Notification } from "@/components/ui/notification"
+import { SalesGrid } from "@/components/sales/SalesGrid"
 import { useTranslation } from "@/hooks/useTranslation"
+import { formatCompactNumber, formatCurrency } from "@/lib/format"
 
 interface CartItem {
   product_id: string
@@ -74,6 +69,7 @@ export default function SalesHistoryPage() {
   const [selectedProduct, setSelectedProduct] = useState("")
   const [quantity, setQuantity] = useState("1")
   const [installmentCount, setInstallmentCount] = useState(3)
+  const [installmentError, setInstallmentError] = useState("")
   const [firstDueDate, setFirstDueDate] = useState("")
   const [notes, setNotes] = useState("")
   const [isCreating, setIsCreating] = useState(false)
@@ -102,6 +98,23 @@ export default function SalesHistoryPage() {
   const { customers } = useCustomers()
   const { products } = useProducts()
   const { toast } = useToast()
+
+  const [viewMode, setViewMode] = useState<"table" | "grid">(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("salesViewMode")
+      return (saved as "table" | "grid") || "table"
+    }
+    return "table"
+  })
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("salesViewMode", viewMode)
+    }
+  }, [viewMode])
+
+  const [statModalOpen, setStatModalOpen] = useState(false)
+  const [selectedStat, setSelectedStat] = useState<{ label: string; value: number } | null>(null)
 
   const filteredSales = useMemo(() => {
     return sales.filter((sale: any) => {
@@ -239,6 +252,7 @@ export default function SalesHistoryPage() {
     setQuantity("1")
     setSelectedProduct("")
     setInstallmentCount(3)
+    setInstallmentError("")
   }
 
   const handleCreateSale = async () => {
@@ -262,12 +276,12 @@ export default function SalesHistoryPage() {
       return
     }
 
-    if (paymentType === "credit" && !firstDueDate) {
+    if (paymentType === "credit" && (!firstDueDate || installmentCount < 1)) {
       setNotification({
         open: true,
         type: "error",
-        title: "Missing Due Date",
-        content: "Please set the first installment due date for credit sales",
+        title: "Invalid Installment Details",
+        content: "Please set a valid first installment due date and ensure at least 1 installment.",
       })
       return
     }
@@ -379,27 +393,29 @@ export default function SalesHistoryPage() {
                   {t("sales.newSale")}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
+              <DialogContent className="w-[95vw] sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px] max-h-[90vh] flex flex-col p-4 sm:p-6">
                 <DialogHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <DialogTitle>{t("sales.createNewSale")}</DialogTitle>
-                      <DialogDescription>{t("sales.addProductsComplete")}</DialogDescription>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <DialogTitle className="text-lg sm:text-xl">{t("sales.createNewSale")}</DialogTitle>
+                      <DialogDescription className="text-xs sm:text-sm">
+                        {t("sales.addProductsComplete")}
+                      </DialogDescription>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowTutorial(true)}
-                      className="gap-2 bg-white/10 backdrop-blur-sm hover:bg-white/20"
+                      className="gap-2 bg-white/10 backdrop-blur-sm hover:bg-white/20 flex-shrink-0"
                     >
                       <HelpCircle className="w-4 h-4" />
-                      <span>{t("sales.tutorial")}</span>
+                      <span className="hidden sm:inline">{t("sales.tutorial")}</span>
                     </Button>
                   </div>
                 </DialogHeader>
 
                 <div className="flex-1 overflow-y-auto px-1">
-                  <div className="grid gap-6 py-4">
+                  <div className="grid gap-4 sm:gap-6 py-4">
                     <motion.div
                       className="grid gap-2 relative"
                       animate={{
@@ -410,136 +426,134 @@ export default function SalesHistoryPage() {
                       transition={{ duration: 0.3 }}
                       style={{
                         borderRadius: "0.5rem",
-                        padding: "1rem",
+                        padding: "0.75rem",
                         backgroundColor: "rgba(255, 255, 255, 0.5)",
                       }}
                     >
-                      <Label className="flex items-center gap-2 text-base font-semibold">
-                        <div className="relative w-8 h-8 flex items-center justify-center">
+                      <Label className="flex items-center gap-2 text-sm sm:text-base font-semibold">
+                        <div className="relative w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center flex-shrink-0">
                           <div className="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-lg" />
                           <div className="absolute inset-0 bg-black rounded-lg" />
-                          <User className="w-5 h-5 relative z-10 text-white" />
+                          <User className="w-4 h-4 sm:w-5 sm:h-5 relative z-10 text-white" />
                         </div>
                         {t("sales.customer")} <span className="text-red-500">*</span>
                       </Label>
                       <div className="grid gap-3">
-                        <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
-                          <SelectTrigger className="h-12 w-full">
-                            <SelectValue placeholder={t("sales.selectCustomer")} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {customers.map((customer) => (
-                              <SelectItem key={customer.id} value={customer.id}>
-                                <div className="flex items-center gap-2">
-                                  <User className="w-4 h-4 text-neutral-500" />
-                                  <div>
-                                    <p className="font-medium">{customer.name}</p>
-                                    <p className="text-xs text-neutral-500">{customer.email || customer.phone}</p>
-                                  </div>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-
-                        <AnimatePresence>
-                          {isCustomerSelected && selectedCustomerData && (
-                            <motion.div
-                              initial={{ opacity: 0, y: -10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              transition={{ duration: 0.3, ease: "easeOut" }}
-                              className="p-4 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 shadow-lg"
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-black to-white/20 flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
-                                  {selectedCustomerData.name.charAt(0).toUpperCase()}
+                        <SearchableSelect
+                          items={customers}
+                          value={selectedCustomer}
+                          onValueChange={setSelectedCustomer}
+                          placeholder={t("sales.selectCustomer")}
+                          searchPlaceholder={t("common.search")}
+                          emptyMessage={t("customers.noCustomers")}
+                          getItemId={(customer) => customer.id}
+                          getItemSearchText={(customer) =>
+                            `${customer.name} ${customer.email || ""} ${customer.phone || ""}`
+                          }
+                          renderItem={(customer) => (
+                            <div className="flex items-center gap-2">
+                              <User className="w-4 h-4 text-neutral-500 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{customer.name}</p>
+                                <p className="text-xs text-neutral-500 truncate">{customer.email || customer.phone}</p>
+                              </div>
+                            </div>
+                          )}
+                          renderSelectedPreview={(customer) => (
+                            <div className="p-3 sm:p-4 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 shadow-lg">
+                              <div className="flex items-start gap-2 sm:gap-3">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-black to-white/20 flex items-center justify-center text-white font-semibold text-base sm:text-lg flex-shrink-0">
+                                  {customer.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <p className="font-semibold text-base">{selectedCustomerData.name}</p>
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <p className="font-semibold text-sm sm:text-base truncate">{customer.name}</p>
                                     <Badge
-                                      className={`text-xs ${
-                                        selectedCustomerData.customer_type === "vip"
+                                      className={`text-xs flex-shrink-0 ${
+                                        customer.customer_type === "vip"
                                           ? "bg-gradient-to-r from-yellow-400 to-yellow-600 text-black"
-                                          : selectedCustomerData.customer_type === "wholesale"
+                                          : customer.customer_type === "wholesale"
                                             ? "bg-blue-500 text-white"
                                             : "bg-gray-400 text-white"
                                       }`}
                                     >
-                                      {selectedCustomerData.customer_type?.toUpperCase() || "REGULAR"}
+                                      {customer.customer_type?.toUpperCase() || "REGULAR"}
                                     </Badge>
                                   </div>
-                                  {selectedCustomerData.email && (
-                                    <p className="text-sm text-neutral-600 truncate">{selectedCustomerData.email}</p>
+                                  {customer.email && (
+                                    <p className="text-xs sm:text-sm text-neutral-600 truncate">{customer.email}</p>
                                   )}
-                                  {selectedCustomerData.phone && (
-                                    <p className="text-sm text-neutral-600">{selectedCustomerData.phone}</p>
+                                  {customer.phone && (
+                                    <p className="text-xs sm:text-sm text-neutral-600">{customer.phone}</p>
                                   )}
                                 </div>
                               </div>
-                            </motion.div>
+                            </div>
                           )}
-                        </AnimatePresence>
+                        />
                       </div>
                     </motion.div>
 
-                    <div className="border-2 border-dashed border-neutral-300 rounded-lg p-4 bg-neutral-50">
-                      <h3 className="font-semibold mb-3 flex items-center gap-2">
-                        <div className="relative w-8 h-8 flex items-center justify-center">
+                    <div className="border-2 border-dashed border-neutral-300 rounded-lg p-3 sm:p-4 bg-neutral-50">
+                      <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
+                        <div className="relative w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center flex-shrink-0">
                           <div className="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-lg" />
                           <div className="absolute inset-0 bg-black rounded-lg" />
-                          <Package className="w-5 h-5 relative z-10 text-white" />
+                          <Package className="w-4 h-4 sm:w-5 sm:h-5 relative z-10 text-white" />
                         </div>
                         {t("sales.addProducts")}
                       </h3>
-                      <div className="grid grid-cols-[1fr_120px_auto] gap-2">
-                        <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t("sales.selectProduct")} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {products.map((product) => (
-                              <SelectItem key={product.id} value={product.id}>
-                                <div className="flex items-center gap-3">
-                                  {product.image_url ? (
-                                    <img
-                                      src={product.image_url || "/placeholder.svg"}
-                                      alt={product.name}
-                                      className="w-8 h-8 rounded object-cover"
-                                    />
-                                  ) : (
-                                    <div className="w-8 h-8 rounded bg-gradient-to-br from-black to-white flex items-center justify-center">
-                                      <ImageIcon className="w-4 h-4 text-white" />
-                                    </div>
-                                  )}
-                                  <div>
-                                    <p className="font-medium">{product.name}</p>
-                                    <p className="text-xs text-neutral-500">
-                                      ${product.price} • Stock: {product.stock_quantity}
-                                    </p>
-                                  </div>
+                      <div className="flex flex-col sm:grid sm:grid-cols-[1fr_100px_auto] gap-2">
+                        <SearchableSelect
+                          items={products}
+                          value={selectedProduct}
+                          onValueChange={setSelectedProduct}
+                          placeholder={t("sales.selectProduct")}
+                          searchPlaceholder={t("common.search")}
+                          emptyMessage={t("products.noProducts")}
+                          getItemId={(product) => product.id}
+                          getItemSearchText={(product) => `${product.name} ${product.sku || ""}`}
+                          renderItem={(product) => (
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              {product.image_url ? (
+                                <img
+                                  src={product.image_url || "/placeholder.svg"}
+                                  alt={product.name}
+                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded object-cover flex-shrink-0"
+                                />
+                              ) : (
+                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-gradient-to-br from-black to-white flex items-center justify-center flex-shrink-0">
+                                  <ImageIcon className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                                 </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="number"
-                          min="0"
-                          value={quantity}
-                          onChange={(e) => setQuantity(e.target.value)}
-                          placeholder={t("sales.qty")}
-                          className="h-10"
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{product.name}</p>
+                                <p className="text-xs text-neutral-500">
+                                  ${product.price} • Stock: {product.stock_quantity}
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         />
-                        <Button
-                          type="button"
-                          onClick={handleAddToCart}
-                          disabled={!selectedProduct || !quantity || Number.parseInt(quantity) <= 0}
-                          className="h-10 bg-neutral-900 hover:bg-neutral-800"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
+                        <div className="flex gap-2 sm:contents">
+                          <Input
+                            type="number"
+                            min="0"
+                            value={quantity}
+                            onChange={(e) => setQuantity(e.target.value)}
+                            placeholder={t("sales.qty")}
+                            className="h-10 flex-1 sm:flex-none"
+                          />
+                          <Button
+                            type="button"
+                            onClick={handleAddToCart}
+                            disabled={!selectedProduct || !quantity || Number.parseInt(quantity) <= 0}
+                            className="h-10 bg-neutral-900 hover:bg-neutral-800 px-4 sm:px-3"
+                          >
+                            <Plus className="w-4 h-4" />
+                            <span className="sm:hidden ml-2">{t("common.add")}</span>
+                          </Button>
+                        </div>
                       </div>
                     </div>
 
@@ -651,20 +665,36 @@ export default function SalesHistoryPage() {
 
                     {/* Installments (if credit) */}
                     {paymentType === "credit" && (
-                      <div className="border rounded-lg p-4 bg-blue-50">
-                        <h3 className="font-semibold mb-3">{t("sales.installmentDetails")}</h3>
-                        <div className="grid grid-cols-2 gap-4">
+                      <div className="border rounded-lg p-3 sm:p-4 bg-blue-50">
+                        <h3 className="font-semibold mb-3 text-sm sm:text-base">{t("sales.installmentDetails")}</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                           <div className="grid gap-2">
-                            <Label>{t("sales.numberOfInstallments")}</Label>
+                            <Label className="text-sm">{t("sales.numberOfInstallments")}</Label>
                             <Input
                               type="number"
-                              min="2"
-                              value={installmentCount}
-                              onChange={(e) => setInstallmentCount(Number.parseInt(e.target.value) || 2)}
+                              min="1"
+                              value={installmentCount === 0 ? "" : installmentCount}
+                              onChange={(e) => {
+                                const value = e.target.value
+                                if (value === "") {
+                                  setInstallmentCount(0)
+                                  setInstallmentError(t("sales.installmentMinError"))
+                                } else {
+                                  const num = Number.parseInt(value)
+                                  setInstallmentCount(num)
+                                  if (num < 1) {
+                                    setInstallmentError(t("sales.installmentMinError"))
+                                  } else {
+                                    setInstallmentError("")
+                                  }
+                                }
+                              }}
+                              className={installmentError ? "border-red-500" : ""}
                             />
+                            {installmentError && <p className="text-xs text-red-600">{installmentError}</p>}
                           </div>
                           <div className="grid gap-2">
-                            <Label>{t("sales.firstDueDate")}</Label>
+                            <Label className="text-sm">{t("sales.firstDueDate")}</Label>
                             <Input
                               type="date"
                               value={firstDueDate}
@@ -673,9 +703,11 @@ export default function SalesHistoryPage() {
                             />
                           </div>
                         </div>
-                        <p className="text-sm text-neutral-600 mt-2">
-                          {t("sales.eachInstallment")}: ${(totalAmount / installmentCount).toFixed(2)}
-                        </p>
+                        {installmentCount >= 1 && (
+                          <p className="text-xs sm:text-sm text-neutral-600 mt-2">
+                            {t("sales.eachInstallment")}: ${(totalAmount / installmentCount).toFixed(2)}
+                          </p>
+                        )}
                       </div>
                     )}
 
@@ -692,7 +724,7 @@ export default function SalesHistoryPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4 border-t">
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4 border-t">
                   <Button
                     type="button"
                     variant="outline"
@@ -701,12 +733,13 @@ export default function SalesHistoryPage() {
                       setIsCreateDialogOpen(false)
                     }}
                     disabled={isCreating}
+                    className="w-full sm:w-auto"
                   >
                     {t("sales.cancel")}
                   </Button>
                   <Button
                     onClick={handleCreateSale}
-                    className="bg-neutral-900 hover:bg-neutral-800"
+                    className="bg-neutral-900 hover:bg-neutral-800 w-full sm:w-auto"
                     disabled={isCreating || cart.length === 0 || !selectedCustomer}
                   >
                     {isCreating ? (
@@ -733,206 +766,203 @@ export default function SalesHistoryPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <GlassCard>
+          <GlassCard
+            className="cursor-pointer hover:shadow-lg transition-all"
+            onClick={() => {
+              setSelectedStat({ label: t("sales.totalRevenue"), value: totalRevenue })
+              setStatModalOpen(true)
+            }}
+          >
             <div className="flex items-center gap-4">
               <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
                 <DollarSign className="w-6 h-6 text-white" />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm sm:text-base text-neutral-600">{t("sales.totalRevenue")}</p>
-                <p className="text-2xl sm:text-3xl font-bold text-neutral-900">${totalRevenue.toFixed(2)}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-neutral-900 truncate">
+                  ${formatCompactNumber(totalRevenue)}
+                </p>
               </div>
             </div>
           </GlassCard>
-          <GlassCard>
+          <GlassCard
+            className="cursor-pointer hover:shadow-lg transition-all"
+            onClick={() => {
+              setSelectedStat({ label: t("sales.totalOrders"), value: totalOrders })
+              setStatModalOpen(true)
+            }}
+          >
             <div className="flex items-center gap-4">
               <div className="p-3 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl">
                 <ShoppingCart className="w-6 h-6 text-white" />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm sm:text-base text-neutral-600">{t("sales.totalOrders")}</p>
-                <p className="text-2xl sm:text-3xl font-bold text-neutral-900">{totalOrders}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-neutral-900 truncate">{totalOrders}</p>
               </div>
             </div>
           </GlassCard>
-          <GlassCard>
+          <GlassCard
+            className="cursor-pointer hover:shadow-lg transition-all"
+            onClick={() => {
+              setSelectedStat({ label: t("sales.avgOrderValue"), value: avgOrderValue })
+              setStatModalOpen(true)
+            }}
+          >
             <div className="flex items-center gap-4">
               <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl">
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm sm:text-base text-neutral-600">{t("sales.avgOrderValue")}</p>
-                <p className="text-2xl sm:text-3xl font-bold text-neutral-900">${avgOrderValue.toFixed(2)}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-neutral-900 truncate">
+                  ${formatCompactNumber(avgOrderValue)}
+                </p>
               </div>
             </div>
           </GlassCard>
         </div>
 
-        <GlassCard className="mb-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                {t("sales.filters")}
-                {activeFiltersCount > 0 && (
-                  <Badge variant="secondary" className="ml-2">
-                    {activeFiltersCount} {t("sales.active")}
-                  </Badge>
-                )}
-              </h3>
-              {activeFiltersCount > 0 && (
-                <Button variant="ghost" size="sm" onClick={clearAllFilters}>
-                  {t("sales.clearAll")}
-                </Button>
-              )}
+        <GlassCard className="mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+              <Input
+                placeholder={t("sales.searchPlaceholder")}
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-2">
-                <Label className="text-xs text-neutral-600">{t("sales.search")}</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-                  <Input
-                    placeholder={t("sales.searchPlaceholder")}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs text-neutral-600">{t("sales.fromDate")}</Label>
-                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs text-neutral-600">{t("sales.toDate")}</Label>
-                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs text-neutral-600">{t("sales.customer")}</Label>
-                <Select value={selectedCustomerFilter} onValueChange={setSelectedCustomerFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("sales.allCustomers")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("sales.allCustomers")}</SelectItem>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        {customer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2 bg-transparent">
-                    {t("sales.statusLabel")}
-                    <ChevronDown className="h-4 w-4" />
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setViewMode("table")}
+                className={`transition-all duration-300 ${
+                  viewMode === "table"
+                    ? "bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white border-neutral-900"
+                    : "hover:bg-neutral-900 hover:text-white"
+                }`}
+              >
+                <List className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setViewMode("grid")}
+                className={`transition-all duration-300 ${
+                  viewMode === "grid"
+                    ? "bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white border-neutral-900"
+                    : "hover:bg-neutral-900 hover:text-white"
+                }`}
+              >
+                <Grid className="w-4 h-4" />
+              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex-1 sm:flex-initial bg-transparent hover:bg-neutral-100">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <span className="sm:inline">{t("common.filter")}</span>
+                    {activeFiltersCount > 0 && (
+                      <Badge variant="secondary" className="ml-2">
+                        {activeFiltersCount}
+                      </Badge>
+                    )}
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuLabel>{t("sales.filterByStatus")}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem
-                    checked={statusFilters.includes("paid")}
-                    onCheckedChange={(checked) => {
-                      setStatusFilters(checked ? [...statusFilters, "paid"] : statusFilters.filter((s) => s !== "paid"))
-                    }}
-                  >
-                    {t("sales.status.paid")}
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={statusFilters.includes("pending")}
-                    onCheckedChange={(checked) => {
-                      setStatusFilters(
-                        checked ? [...statusFilters, "pending"] : statusFilters.filter((s) => s !== "pending"),
-                      )
-                    }}
-                  >
-                    {t("sales.status.pending")}
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={statusFilters.includes("partial")}
-                    onCheckedChange={(checked) => {
-                      setStatusFilters(
-                        checked ? [...statusFilters, "partial"] : statusFilters.filter((s) => s !== "partial"),
-                      )
-                    }}
-                  >
-                    {t("sales.status.partial")}
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={statusFilters.includes("cancelled")}
-                    onCheckedChange={(checked) => {
-                      setStatusFilters(
-                        checked ? [...statusFilters, "cancelled"] : statusFilters.filter((s) => s !== "cancelled"),
-                      )
-                    }}
-                  >
-                    {t("sales.status.cancelled")}
-                  </DropdownMenuCheckboxItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2 bg-transparent">
-                    {t("sales.paymentTypeFilter")}
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuLabel>{t("sales.filterByPayment")}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem
-                    checked={paymentFilters.includes("cash")}
-                    onCheckedChange={(checked) => {
-                      setPaymentFilters(
-                        checked ? [...paymentFilters, "cash"] : paymentFilters.filter((p) => p !== "cash"),
-                      )
-                    }}
-                  >
-                    {t("sales.paymentType.cash")}
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={paymentFilters.includes("credit")}
-                    onCheckedChange={(checked) => {
-                      setPaymentFilters(
-                        checked ? [...paymentFilters, "credit"] : paymentFilters.filter((p) => p !== "credit"),
-                      )
-                    }}
-                  >
-                    {t("sales.paymentType.credit")}
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={paymentFilters.includes("debit")}
-                    onCheckedChange={(checked) => {
-                      setPaymentFilters(
-                        checked ? [...paymentFilters, "debit"] : paymentFilters.filter((p) => p !== "debit"),
-                      )
-                    }}
-                  >
-                    {t("sales.paymentType.debit")}
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={paymentFilters.includes("transfer")}
-                    onCheckedChange={(checked) => {
-                      setPaymentFilters(
-                        checked ? [...paymentFilters, "transfer"] : paymentFilters.filter((p) => p !== "transfer"),
-                      )
-                    }}
-                  >
-                    {t("sales.paymentType.transfer")}
-                  </DropdownMenuCheckboxItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px] max-h-[85vh] flex flex-col">
+                  <DialogHeader>
+                    <DialogTitle>{t("sales.filters")}</DialogTitle>
+                    <DialogDescription>Set your preferred filters to narrow down the sales list</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4 overflow-y-auto flex-1">
+                    <div className="space-y-2">
+                      <Label>{t("sales.fromDate")}</Label>
+                      <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("sales.toDate")}</Label>
+                      <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("sales.customer")}</Label>
+                      <Select value={selectedCustomerFilter} onValueChange={setSelectedCustomerFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("sales.allCustomers")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t("sales.allCustomers")}</SelectItem>
+                          {customers.map((customer) => (
+                            <SelectItem key={customer.id} value={customer.id}>
+                              {customer.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("sales.statusFilter")}</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {["paid", "pending", "partial", "cancelled"].map((status) => (
+                          <Button
+                            key={status}
+                            variant={statusFilters.includes(status) ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => {
+                              setStatusFilters(
+                                statusFilters.includes(status)
+                                  ? statusFilters.filter((s) => s !== status)
+                                  : [...statusFilters, status],
+                              )
+                            }}
+                            className={
+                              statusFilters.includes(status)
+                                ? "bg-neutral-900 hover:bg-neutral-800"
+                                : "hover:bg-neutral-100"
+                            }
+                          >
+                            {t(`sales.status.${status}`)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("sales.paymentTypeFilter")}</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {["cash", "credit"].map((payment) => (
+                          <Button
+                            key={payment}
+                            variant={paymentFilters.includes(payment) ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => {
+                              setPaymentFilters(
+                                paymentFilters.includes(payment)
+                                  ? paymentFilters.filter((p) => p !== payment)
+                                  : [...paymentFilters, payment],
+                              )
+                            }}
+                            className={
+                              paymentFilters.includes(payment)
+                                ? "bg-neutral-900 hover:bg-neutral-800"
+                                : "hover:bg-neutral-100"
+                            }
+                          >
+                            {t(`sales.paymentType.${payment}`)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-4 border-t">
+                    {activeFiltersCount > 0 && (
+                      <Button variant="outline" onClick={clearAllFilters}>
+                        {t("sales.clearAll")}
+                      </Button>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </GlassCard>
@@ -954,9 +984,9 @@ export default function SalesHistoryPage() {
             </div>
           ) : filteredSales.length === 0 ? (
             <div className="text-center py-8 text-neutral-600">
-              {sales.length === 0 ? t("sales.noSalesYet") : t("sales.noSalesMatch")}
+              {sales.length === 0 ? t("sales.noSales") : t("sales.noSalesMatch")}
             </div>
-          ) : (
+          ) : viewMode === "table" ? (
             <div className="overflow-x-auto -mx-2 sm:mx-0">
               <div className="inline-block min-w-full align-middle">
                 <table className="w-full">
@@ -1068,9 +1098,39 @@ export default function SalesHistoryPage() {
                 </table>
               </div>
             </div>
+          ) : (
+            <SalesGrid
+              sales={filteredSales}
+              onViewDetails={(sale) => {
+                setSelectedSale(sale)
+                setDetailsOpen(true)
+              }}
+              onShareInvoice={handleShareInvoice}
+              onOpenWhatsApp={openWhatsApp}
+              t={t}
+            />
           )}
         </GlassCard>
       </motion.div>
+
+      <Dialog open={statModalOpen} onOpenChange={setStatModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>{selectedStat?.label}</DialogTitle>
+            <DialogDescription>Complete value details</DialogDescription>
+          </DialogHeader>
+          <div className="py-6">
+            <div className="text-center">
+              <p className="text-sm text-neutral-600 mb-2">Exact Amount</p>
+              <p className="text-4xl font-bold text-neutral-900">
+                {selectedStat?.label.includes("Order") && !selectedStat?.label.includes("Value")
+                  ? selectedStat?.value
+                  : formatCurrency(selectedStat?.value || 0)}
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <SaleDetailsModal
         sale={selectedSale}

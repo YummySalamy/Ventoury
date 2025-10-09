@@ -13,6 +13,8 @@ export const es = {
     search: "Buscar",
     filter: "Filtrar",
     actions: "Acciones",
+    clear: "Limpiar", // Added clear translation
+    add: "Agregar", // Added add translation
     view: "Ver",
     share: "Compartir",
     close: "Cerrar",
@@ -494,6 +496,8 @@ export const es = {
     title: "Ventas",
     subtitle: "Historial",
     description: "Ver y administrar todas tus transacciones de ventas",
+    newSale: "Nueva Venta",
+    createNewSale: "Crear Nueva Venta",
     createNew: "Nueva Venta",
     export: "Exportar",
     totalRevenue: "Ingresos Totales",
@@ -502,6 +506,8 @@ export const es = {
     searchPlaceholder: "Cliente, monto...",
     noSales: "No hay ventas aún. ¡Crea tu primera venta!",
     noMatch: "No hay ventas que coincidan con tus filtros.",
+    active: "activos",
+    noSalesMatch: "No hay ventas que coincidan con tus filtros",
     saleNumber: "Venta #",
     customer: "Cliente",
     items: "Artículos",
@@ -511,6 +517,10 @@ export const es = {
     actions: "Acciones",
     date: "Fecha",
     total: "Total",
+    paid: "Pagado",
+    pending: "Pendiente",
+    partial: "Parcial",
+    cancelled: "Cancelado",
 
     // Tipos de pago
     paymentType: {
@@ -538,6 +548,7 @@ export const es = {
     selectCustomerRequired: "Cliente *",
     selectCustomerPlaceholder: "Selecciona un cliente...",
     addProducts: "Agregar Productos",
+    selectProduct: "Seleccionar producto...",
     selectProductPlaceholder: "Seleccionar producto...",
     qty: "Cant",
     cartItems: "Artículos del Carrito",
@@ -546,31 +557,37 @@ export const es = {
     installmentDetails: "Detalles de Cuotas",
     numberOfInstallments: "Número de Cuotas",
     firstDueDate: "Primera Fecha de Vencimiento",
-    eachInstallment: "Cada cuota:",
+    eachInstallment: "Cada cuota",
     notes: "Notas (Opcional)",
+    addNotes: "Agrega notas sobre esta venta...",
     notesPlaceholder: "Agrega notas sobre esta venta",
     cancel: "Cancelar",
     completeSale: "Completar Venta",
     creating: "Creando...",
+    installmentMinError: "Se requiere mínimo 1 cuota",
+    cash: "Efectivo",
+    credit: "Crédito",
+    debitCard: "Tarjeta de Débito",
+    bankTransfer: "Transferencia Bancaria",
 
-    // Pasos del tutorial
+    // Tutorial steps
     tutorialStep1: "Seleccionar Cliente",
     tutorialStep1Desc: "Elige un cliente de tu lista. Este campo es obligatorio.",
     tutorialStep2: "Agregar Productos",
     tutorialStep2Desc:
-      "Selecciona productos, establece cantidades y agrégalos al carrito. Puedes editar las cantidades en el carrito.",
+      "Selecciona productos, establece cantidades y agrégalos a tu carrito. Puedes editar cantidades en el carrito.",
     tutorialStep3: "Elegir Método de Pago",
     tutorialStep3Desc:
       "Selecciona cómo pagará el cliente. Para ventas a crédito, establece los detalles de las cuotas.",
     tutorialStep4: "Completar Venta",
     tutorialStep4Desc: 'Revisa tu carrito y haz clic en "Completar Venta" para finalizar la transacción.',
 
-    // Notificaciones
+    // Notifications
     customerRequired: "Cliente Requerido",
     customerRequiredDesc: "Por favor selecciona un cliente antes de crear una venta",
     cartEmpty: "Carrito Vacío",
     cartEmptyDesc: "Por favor agrega al menos un producto al carrito",
-    missingDueDate: "Falta Fecha de Vencimiento",
+    missingDueDate: "Fecha de Vencimiento Faltante",
     missingDueDateDesc: "Por favor establece la fecha de vencimiento de la primera cuota para ventas a crédito",
     saleCreated: "¡Venta Creada Exitosamente!",
     saleCreatedDesc: "La venta ha sido registrada con {count} artículo(s) por ${amount}",
@@ -579,7 +596,7 @@ export const es = {
     invalidQuantity: "Cantidad Inválida",
     invalidQuantityDesc: "Por favor ingresa una cantidad válida mayor a 0",
 
-    // Filtros
+    // Filters
     filters: "Filtros",
     activeFilters: "activos",
     clearAll: "Limpiar todo",
@@ -592,13 +609,14 @@ export const es = {
     filterByStatus: "Filtrar por Estado",
     paymentTypeFilter: "Tipo de Pago",
     filterByPayment: "Filtrar por Pago",
+    walkIn: "Cliente sin registro",
 
-    // Acciones
+    // Actions
     viewDetails: "Ver Detalles",
     shareInvoice: "Compartir Factura",
     contactWhatsApp: "Contactar vía WhatsApp",
 
-    // Modal de Detalles de Venta
+    // Modal
     modal: {
       title: "Detalles de la Venta",
       shareInvoice: "Compartir Factura",
@@ -619,10 +637,10 @@ export const es = {
       overdueDays: "vencido",
       paymentRecorded: "Pago registrado",
       installmentMarkedPaid: "Cuota marcada como pagada exitosamente",
-      failedMarkPaid: "Error al marcar el pago como pagado",
+      failedMarkPaid: "Error al marcar pago como pagado",
     },
 
-    // Modal de Compartir Factura
+    // Share Modal
     shareModal: {
       title: "Compartir Factura",
       description: "Comparte este enlace de factura con tu cliente",
@@ -640,7 +658,7 @@ export const es = {
       viewInvoice: "Ver tu factura",
     },
 
-    // Diálogo de Ayuda de Cuotas
+    // Installment Help
     installmentHelp: "Cómo Funcionan las Cuotas",
     whatAreInstallments: "¿Qué son las Cuotas?",
     whatAreInstallmentsDesc:
@@ -664,30 +682,14 @@ export const es = {
     pendingStatus: "Pendiente",
     pendingStatusDesc: "El pago está pendiente pero aún no vencido",
     overdueStatus: "Vencido",
-    overdueStatusDesc: "El pago está vencido - contactar al cliente",
+    overdueStatusDesc: "El pago está pasado de la fecha de vencimiento - contactar al cliente",
     partialStatus: "Parcial (Estado de Venta)",
     partialStatusDesc: "Algunas cuotas pagadas, otras pendientes",
     proTips: "Consejos Pro",
     proTip1: "Establece fechas de vencimiento realistas basadas en la capacidad de pago de tu cliente",
     proTip2: "Envía recordatorios de pago unos días antes de la fecha de vencimiento",
-    proTip3: "Revisa el feed de Actividad Reciente para ver todas las actualizaciones de pagos en tiempo real",
+    proTip3: "Revisa el feed de Actividad Reciente para ver todas las actualizaciones de pago en tiempo real",
     proTip4: "Usa filtros para encontrar rápidamente ventas con pagos vencidos",
-
-    newSale: "Nueva Venta",
-    createNewSale: "Crear Nueva Venta",
-    selectProduct: "Seleccionar producto...",
-    cash: "Efectivo",
-    credit: "Crédito",
-    debitCard: "Tarjeta de Débito",
-    bankTransfer: "Transferencia Bancaria",
-    addNotes: "Agregar notas...",
-    paid: "Pagado",
-    pending: "Pendiente",
-    partial: "Parcial",
-    cancelled: "Cancelado",
-    debit: "Débito",
-    transfer: "Transferencia",
-    walkIn: "Cliente sin Registro",
   },
 
   // Cuentas por Cobrar
