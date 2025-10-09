@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
-import { Store, Package, ArrowLeft, ShoppingCart, Mail, Phone, ChevronDown, ChevronUp } from "lucide-react"
+import { Store, Package, ArrowLeft, ShoppingCart, Mail, Phone, ChevronDown, ChevronUp, X } from "lucide-react"
 import { FaWhatsapp } from "react-icons/fa"
 import { FiSearch } from "react-icons/fi"
 import Link from "next/link"
@@ -20,7 +20,7 @@ import { CartSidebar } from "./cart-sidebar"
 import { StoreHeader } from "./store-header"
 import { Footer } from "@/components/landing/footer"
 import { useCart } from "@/contexts/CartContext"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 interface Product {
   id: string
@@ -61,12 +61,13 @@ interface StoreViewProps {
 export function StoreView({ storeId }: StoreViewProps) {
   const [storeData, setStoreData] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null)
   const [productModalOpen, setProductModalOpen] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [categoriesExpanded, setCategoriesExpanded] = useState(false)
+  const [mobileCategorySelectorOpen, setMobileCategorySelectorOpen] = useState(false)
 
   const { setCurrentStoreId } = useCart()
 
@@ -141,8 +142,11 @@ export function StoreView({ storeId }: StoreViewProps) {
   }
 
   const { business, products } = storeData
-  let filteredProducts =
-    selectedCategory === "all" ? products : products.filter((p: any) => p.category_id === selectedCategory)
+  let filteredProducts = products
+
+  if (selectedCategories.length > 0) {
+    filteredProducts = filteredProducts.filter((p: any) => selectedCategories.includes(p.category_id))
+  }
 
   if (searchQuery.trim()) {
     filteredProducts = filteredProducts.filter(
@@ -155,6 +159,20 @@ export function StoreView({ storeId }: StoreViewProps) {
   const MAX_VISIBLE_CATEGORIES = 6
   const visibleCategories = categoriesExpanded ? categories : categories.slice(0, MAX_VISIBLE_CATEGORIES)
   const hiddenCategoriesCount = categories.length - MAX_VISIBLE_CATEGORIES
+
+  const toggleCategory = (categoryId: string) => {
+    setSelectedCategories((prev) => {
+      if (prev.includes(categoryId)) {
+        return prev.filter((id) => id !== categoryId)
+      } else {
+        return [...prev, categoryId]
+      }
+    })
+  }
+
+  const clearAllCategories = () => {
+    setSelectedCategories([])
+  }
 
   return (
     <>
@@ -296,9 +314,9 @@ export function StoreView({ storeId }: StoreViewProps) {
                 <div className="hidden md:block">
                   <div className="flex flex-wrap gap-2">
                     <button
-                      onClick={() => setSelectedCategory("all")}
+                      onClick={clearAllCategories}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                        selectedCategory === "all"
+                        selectedCategories.length === 0
                           ? "bg-neutral-900 text-white shadow-lg"
                           : "backdrop-blur-md bg-white/60 border border-neutral-200 text-neutral-700 hover:bg-white/80"
                       }`}
@@ -310,6 +328,7 @@ export function StoreView({ storeId }: StoreViewProps) {
                     <AnimatePresence>
                       {visibleCategories.map((category: any) => {
                         const categoryProducts = products.filter((p: any) => p.category_id === category.id)
+                        const isSelected = selectedCategories.includes(category.id)
                         return (
                           <motion.button
                             key={category.id}
@@ -317,14 +336,14 @@ export function StoreView({ storeId }: StoreViewProps) {
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.8 }}
                             transition={{ duration: 0.2 }}
-                            onClick={() => setSelectedCategory(category.id)}
+                            onClick={() => toggleCategory(category.id)}
                             className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
-                              selectedCategory === category.id
+                              isSelected
                                 ? "text-white shadow-lg"
                                 : "backdrop-blur-md bg-white/60 border border-neutral-200 text-neutral-700 hover:bg-white/80"
                             }`}
                             style={
-                              selectedCategory === category.id
+                              isSelected
                                 ? {
                                     background: `linear-gradient(135deg, ${category.color || "#3b82f6"}, ${category.color || "#3b82f6"}dd)`,
                                   }
@@ -374,40 +393,170 @@ export function StoreView({ storeId }: StoreViewProps) {
 
                 {/* Mobile View */}
                 <div className="md:hidden">
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="w-full h-12 backdrop-blur-md bg-white/60 border-neutral-200/50 rounded-full">
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        <div className="flex items-center justify-between w-full">
-                          <span>All Products</span>
-                          <span className="ml-2 text-xs text-neutral-500">({products.length})</span>
+                  {categories.length > 5 ? (
+                    <>
+                      <Dialog open={mobileCategorySelectorOpen} onOpenChange={setMobileCategorySelectorOpen}>
+                        <DialogTrigger asChild>
+                          <button className="w-full h-12 backdrop-blur-md bg-white/60 border border-neutral-200/50 rounded-full px-4 flex items-center justify-between text-sm font-medium text-neutral-700 hover:bg-white/80 transition-all">
+                            <span>
+                              {selectedCategories.length === 0
+                                ? "All Products"
+                                : selectedCategories.length === 1
+                                  ? categories.find((c) => c.id === selectedCategories[0])?.name
+                                  : `${selectedCategories.length} Categories Selected`}
+                            </span>
+                            <ChevronDown className="h-4 w-4" />
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle className="flex items-center justify-between">
+                              <span>Select Categories</span>
+                              {selectedCategories.length > 0 && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={clearAllCategories}
+                                  className="text-xs text-neutral-500 hover:text-neutral-700"
+                                >
+                                  Clear All
+                                </Button>
+                              )}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="max-h-[60vh] overflow-y-auto space-y-2 pt-4 pr-2">
+                            {/* All Products Button */}
+                            <button
+                              onClick={() => {
+                                clearAllCategories()
+                                setMobileCategorySelectorOpen(false)
+                              }}
+                              className={`w-full px-4 py-3 rounded-2xl text-sm font-medium transition-all flex items-center justify-between ${
+                                selectedCategories.length === 0
+                                  ? "bg-neutral-900 text-white shadow-lg"
+                                  : "backdrop-blur-md bg-white/60 border border-neutral-200 text-neutral-700 hover:bg-white/80"
+                              }`}
+                            >
+                              <span>All Products</span>
+                              <span className="text-xs opacity-70">({products.length})</span>
+                            </button>
+
+                            {/* Category Buttons */}
+                            {categories.map((category: any) => {
+                              const categoryProducts = products.filter((p: any) => p.category_id === category.id)
+                              const isSelected = selectedCategories.includes(category.id)
+                              return (
+                                <button
+                                  key={category.id}
+                                  onClick={() => toggleCategory(category.id)}
+                                  className={`w-full px-4 py-3 rounded-2xl text-sm font-medium transition-all flex items-center gap-3 ${
+                                    isSelected
+                                      ? "text-white shadow-lg"
+                                      : "backdrop-blur-md bg-white/60 border border-neutral-200 text-neutral-700 hover:bg-white/80"
+                                  }`}
+                                  style={
+                                    isSelected
+                                      ? {
+                                          background: `linear-gradient(135deg, ${category.color || "#3b82f6"}, ${category.color || "#3b82f6"}dd)`,
+                                        }
+                                      : {}
+                                  }
+                                >
+                                  <div className="flex items-center gap-3 flex-1">
+                                    {category.image_url && (
+                                      <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0">
+                                        <Image
+                                          src={category.image_url || "/placeholder.svg"}
+                                          alt={category.name}
+                                          fill
+                                          className="object-cover"
+                                        />
+                                      </div>
+                                    )}
+                                    <span className="flex-1 text-left">{category.name}</span>
+                                  </div>
+                                  <span className="text-xs opacity-70">({categoryProducts.length})</span>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+
+                      {/* Selected Categories Pills */}
+                      {selectedCategories.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {selectedCategories.map((categoryId) => {
+                            const category = categories.find((c) => c.id === categoryId)
+                            if (!category) return null
+                            return (
+                              <button
+                                key={categoryId}
+                                onClick={() => toggleCategory(categoryId)}
+                                className="px-3 py-1.5 rounded-full text-xs font-medium text-white shadow-md flex items-center gap-2 transition-all hover:shadow-lg"
+                                style={{
+                                  background: `linear-gradient(135deg, ${category.color || "#3b82f6"}, ${category.color || "#3b82f6"}dd)`,
+                                }}
+                              >
+                                {category.name}
+                                <X className="h-3 w-3" />
+                              </button>
+                            )
+                          })}
                         </div>
-                      </SelectItem>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={clearAllCategories}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                          selectedCategories.length === 0
+                            ? "bg-neutral-900 text-white shadow-lg"
+                            : "backdrop-blur-md bg-white/60 border border-neutral-200 text-neutral-700 hover:bg-white/80"
+                        }`}
+                      >
+                        All Products
+                        <span className="ml-2 text-xs opacity-70">({products.length})</span>
+                      </button>
+
                       {categories.map((category: any) => {
                         const categoryProducts = products.filter((p: any) => p.category_id === category.id)
+                        const isSelected = selectedCategories.includes(category.id)
                         return (
-                          <SelectItem key={category.id} value={category.id}>
-                            <div className="flex items-center gap-2">
-                              {category.image_url && (
-                                <div className="relative w-5 h-5 rounded-full overflow-hidden">
-                                  <Image
-                                    src={category.image_url || "/placeholder.svg"}
-                                    alt={category.name}
-                                    fill
-                                    className="object-cover"
-                                  />
-                                </div>
-                              )}
-                              <span>{category.name}</span>
-                              <span className="text-xs text-neutral-500">({categoryProducts.length})</span>
-                            </div>
-                          </SelectItem>
+                          <button
+                            key={category.id}
+                            onClick={() => toggleCategory(category.id)}
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+                              isSelected
+                                ? "text-white shadow-lg"
+                                : "backdrop-blur-md bg-white/60 border border-neutral-200 text-neutral-700 hover:bg-white/80"
+                            }`}
+                            style={
+                              isSelected
+                                ? {
+                                    background: `linear-gradient(135deg, ${category.color || "#3b82f6"}, ${category.color || "#3b82f6"}dd)`,
+                                  }
+                                : {}
+                            }
+                          >
+                            {category.image_url && (
+                              <div className="relative w-5 h-5 rounded-full overflow-hidden">
+                                <Image
+                                  src={category.image_url || "/placeholder.svg"}
+                                  alt={category.name}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                            )}
+                            {category.name}
+                            <span className="text-xs opacity-70">({categoryProducts.length})</span>
+                          </button>
                         )
                       })}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                  )}
                 </div>
               </div>
               <Separator className="my-6" />
@@ -425,18 +574,18 @@ export function StoreView({ storeId }: StoreViewProps) {
                   <h3 className="text-2xl font-bold text-neutral-900 mb-3">
                     {searchQuery.trim()
                       ? "No Results Found"
-                      : selectedCategory === "all"
+                      : selectedCategories.length === 0
                         ? "No Products Yet"
                         : "Nothing Here"}
                   </h3>
                   <p className="text-neutral-600 mb-2">
                     {searchQuery.trim()
                       ? `No products match "${searchQuery}". Try a different search term.`
-                      : selectedCategory === "all"
+                      : selectedCategories.length === 0
                         ? "This store is setting up their catalog."
-                        : "No products available in this category at the moment."}
+                        : "No products available in selected categories at the moment."}
                   </p>
-                  {!searchQuery.trim() && (
+                  {!searchQuery.trim() && selectedCategories.length === 0 && (
                     <p className="text-sm text-neutral-500 italic">Check back soon for new arrivals</p>
                   )}
                 </div>
