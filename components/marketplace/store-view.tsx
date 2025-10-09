@@ -2,13 +2,15 @@
 
 import type React from "react"
 import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { Store, Package, ArrowLeft, ShoppingCart, Mail, Phone } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Store, Package, ArrowLeft, ShoppingCart, Mail, Phone, ChevronDown, ChevronUp } from "lucide-react"
 import { FaWhatsapp } from "react-icons/fa"
+import { FiSearch } from "react-icons/fi"
 import Link from "next/link"
 import Image from "next/image"
 import { supabase } from "@/lib/supabase"
@@ -18,6 +20,7 @@ import { CartSidebar } from "./cart-sidebar"
 import { StoreHeader } from "./store-header"
 import { Footer } from "@/components/landing/footer"
 import { useCart } from "@/contexts/CartContext"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Product {
   id: string
@@ -62,6 +65,8 @@ export function StoreView({ storeId }: StoreViewProps) {
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null)
   const [productModalOpen, setProductModalOpen] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [categoriesExpanded, setCategoriesExpanded] = useState(false)
 
   const { setCurrentStoreId } = useCart()
 
@@ -136,8 +141,20 @@ export function StoreView({ storeId }: StoreViewProps) {
   }
 
   const { business, products } = storeData
-  const filteredProducts =
+  let filteredProducts =
     selectedCategory === "all" ? products : products.filter((p: any) => p.category_id === selectedCategory)
+
+  if (searchQuery.trim()) {
+    filteredProducts = filteredProducts.filter(
+      (p: any) =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+    )
+  }
+
+  const MAX_VISIBLE_CATEGORIES = 6
+  const visibleCategories = categoriesExpanded ? categories : categories.slice(0, MAX_VISIBLE_CATEGORIES)
+  const hiddenCategoriesCount = categories.length - MAX_VISIBLE_CATEGORIES
 
   return (
     <>
@@ -255,56 +272,142 @@ export function StoreView({ storeId }: StoreViewProps) {
             </Card>
           </div>
 
+          {/* Search Bar */}
+          <div className="mb-6">
+            <div className="relative">
+              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-black" />
+              <Input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-12 backdrop-blur-md bg-white/60 border-neutral-200/50 rounded-full shadow-sm focus:bg-white/80 transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Categories Section */}
           {!loading && categories.length > 0 && (
             <>
               <div className="mb-6">
                 <h3 className="mb-3 text-sm font-semibold text-neutral-600">Browse by Category</h3>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setSelectedCategory("all")}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      selectedCategory === "all"
-                        ? "bg-neutral-900 text-white shadow-lg"
-                        : "backdrop-blur-md bg-white/60 border border-neutral-200 text-neutral-700 hover:bg-white/80"
-                    }`}
-                  >
-                    All Products
-                    <span className="ml-2 text-xs opacity-70">({products.length})</span>
-                  </button>
-                  {categories.map((category: any) => {
-                    const categoryProducts = products.filter((p: any) => p.category_id === category.id)
-                    return (
-                      <button
-                        key={category.id}
-                        onClick={() => setSelectedCategory(category.id)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
-                          selectedCategory === category.id
-                            ? "text-white shadow-lg"
-                            : "backdrop-blur-md bg-white/60 border border-neutral-200 text-neutral-700 hover:bg-white/80"
-                        }`}
-                        style={
-                          selectedCategory === category.id
-                            ? {
-                                background: `linear-gradient(135deg, ${category.color || "#3b82f6"}, ${category.color || "#3b82f6"}dd)`,
-                              }
-                            : {}
-                        }
+
+                {/* Desktop View */}
+                <div className="hidden md:block">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setSelectedCategory("all")}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        selectedCategory === "all"
+                          ? "bg-neutral-900 text-white shadow-lg"
+                          : "backdrop-blur-md bg-white/60 border border-neutral-200 text-neutral-700 hover:bg-white/80"
+                      }`}
+                    >
+                      All Products
+                      <span className="ml-2 text-xs opacity-70">({products.length})</span>
+                    </button>
+
+                    <AnimatePresence>
+                      {visibleCategories.map((category: any) => {
+                        const categoryProducts = products.filter((p: any) => p.category_id === category.id)
+                        return (
+                          <motion.button
+                            key={category.id}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={() => setSelectedCategory(category.id)}
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+                              selectedCategory === category.id
+                                ? "text-white shadow-lg"
+                                : "backdrop-blur-md bg-white/60 border border-neutral-200 text-neutral-700 hover:bg-white/80"
+                            }`}
+                            style={
+                              selectedCategory === category.id
+                                ? {
+                                    background: `linear-gradient(135deg, ${category.color || "#3b82f6"}, ${category.color || "#3b82f6"}dd)`,
+                                  }
+                                : {}
+                            }
+                          >
+                            {category.image_url && (
+                              <div className="relative w-5 h-5 rounded-full overflow-hidden">
+                                <Image
+                                  src={category.image_url || "/placeholder.svg"}
+                                  alt={category.name}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                            )}
+                            {category.name}
+                            <span className="text-xs opacity-70">({categoryProducts.length})</span>
+                          </motion.button>
+                        )
+                      })}
+                    </AnimatePresence>
+
+                    {/* Expand/Collapse Button */}
+                    {categories.length > MAX_VISIBLE_CATEGORIES && (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        onClick={() => setCategoriesExpanded(!categoriesExpanded)}
+                        className="px-4 py-2 rounded-full text-sm font-medium backdrop-blur-md bg-white/60 border border-neutral-200 text-neutral-700 hover:bg-white/80 transition-all flex items-center gap-2"
                       >
-                        {category.image_url && (
-                          <div className="relative w-5 h-5 rounded-full overflow-hidden">
-                            <Image
-                              src={category.image_url || "/placeholder.svg"}
-                              alt={category.name}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
+                        {categoriesExpanded ? (
+                          <>
+                            <ChevronUp className="h-4 w-4" />
+                            Show Less
+                          </>
+                        ) : (
+                          <>
+                            +{hiddenCategoriesCount}
+                            <ChevronDown className="h-4 w-4" />
+                          </>
                         )}
-                        {category.name}
-                        <span className="text-xs opacity-70">({categoryProducts.length})</span>
-                      </button>
-                    )
-                  })}
+                      </motion.button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Mobile View */}
+                <div className="md:hidden">
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-full h-12 backdrop-blur-md bg-white/60 border-neutral-200/50 rounded-full">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">
+                        <div className="flex items-center justify-between w-full">
+                          <span>All Products</span>
+                          <span className="ml-2 text-xs text-neutral-500">({products.length})</span>
+                        </div>
+                      </SelectItem>
+                      {categories.map((category: any) => {
+                        const categoryProducts = products.filter((p: any) => p.category_id === category.id)
+                        return (
+                          <SelectItem key={category.id} value={category.id}>
+                            <div className="flex items-center gap-2">
+                              {category.image_url && (
+                                <div className="relative w-5 h-5 rounded-full overflow-hidden">
+                                  <Image
+                                    src={category.image_url || "/placeholder.svg"}
+                                    alt={category.name}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              )}
+                              <span>{category.name}</span>
+                              <span className="text-xs text-neutral-500">({categoryProducts.length})</span>
+                            </div>
+                          </SelectItem>
+                        )
+                      })}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <Separator className="my-6" />
@@ -320,14 +423,22 @@ export function StoreView({ storeId }: StoreViewProps) {
                     <Package className="h-12 w-12 text-neutral-400" />
                   </div>
                   <h3 className="text-2xl font-bold text-neutral-900 mb-3">
-                    {selectedCategory === "all" ? "No Products Yet" : "Nothing Here"}
+                    {searchQuery.trim()
+                      ? "No Results Found"
+                      : selectedCategory === "all"
+                        ? "No Products Yet"
+                        : "Nothing Here"}
                   </h3>
                   <p className="text-neutral-600 mb-2">
-                    {selectedCategory === "all"
-                      ? "This store is setting up their catalog."
-                      : "No products available in this category at the moment."}
+                    {searchQuery.trim()
+                      ? `No products match "${searchQuery}". Try a different search term.`
+                      : selectedCategory === "all"
+                        ? "This store is setting up their catalog."
+                        : "No products available in this category at the moment."}
                   </p>
-                  <p className="text-sm text-neutral-500 italic">Check back soon for new arrivals</p>
+                  {!searchQuery.trim() && (
+                    <p className="text-sm text-neutral-500 italic">Check back soon for new arrivals</p>
+                  )}
                 </div>
               </div>
             </div>

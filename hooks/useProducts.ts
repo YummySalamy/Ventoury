@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { supabase } from "@/lib/supabase"
+import { getSupabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/AuthContext"
 
 export interface Product {
@@ -9,25 +9,52 @@ export interface Product {
   name: string
   sku: string
   price: number
-  cost_price?: number // NEW
-  profit_margin?: number // NEW (auto-calculated by trigger)
+  cost_price?: number
+  wholesale_price?: number // Added wholesale price
+  retail_price?: number // Added retail price
+  weighted_avg_cost?: number // Added weighted average cost
+  profit_margin?: number
   stock_quantity: number
+  min_stock_alert?: number // Added custom min stock alert
+  max_stock_target?: number // Added max stock target
   category_id?: string
   image_url?: string
   description?: string
   custom_data?: Record<string, any>
-  show_in_marketplace?: boolean // NEW
-  marketplace_order?: number // NEW
+  show_in_marketplace?: boolean
+  marketplace_order?: number
   low_stock_threshold?: number
   is_active: boolean
   user_id: string
   created_at: string
   updated_at: string
+  last_modified?: string // Added last modified timestamp
   categories?: {
     id: string
     name: string
     icon?: string
+    color?: string // Added color for category tags
   }
+  is_low_stock?: boolean // Calculated field from RPC
+}
+
+export interface InventoryStats {
+  total_products: number
+  in_stock: number
+  out_of_stock: number
+  low_stock_custom: number
+  inventory_value: {
+    at_cost: number
+    at_wholesale: number
+    at_retail: number
+    potential_profit_wholesale: number
+    potential_profit_retail: number
+  }
+}
+
+export interface SearchProductsResult {
+  products: Product[]
+  total_count: number
 }
 
 export function useProducts() {
@@ -45,6 +72,7 @@ export function useProducts() {
       setError(null)
 
       try {
+        const supabase = getSupabase()
         let query = supabase
           .from("products")
           .select(`
@@ -52,14 +80,14 @@ export function useProducts() {
           categories (
             id,
             name,
-            icon
+            icon,
+            color
           )
         `)
           .eq("user_id", user.id)
           .eq("is_active", true)
           .order("created_at", { ascending: false })
 
-        // Apply filters
         if (filters.category_id) {
           query = query.eq("category_id", filters.category_id)
         }
@@ -90,6 +118,7 @@ export function useProducts() {
     if (!user) throw new Error("User not authenticated")
 
     try {
+      const supabase = getSupabase()
       // 1. Insert product first (without image_url)
       const { data: product, error: productError } = await supabase
         .from("products")
@@ -100,7 +129,7 @@ export function useProducts() {
         })
         .select(`
           *,
-          categories (id, name, icon)
+          categories (id, name, icon, color)
         `)
         .single()
 
@@ -118,7 +147,6 @@ export function useProducts() {
           .eq("id", product.id)
 
         if (updateError) {
-          // If update fails, delete the uploaded image
           await deleteProductImage(imageUrl)
           throw updateError
         }
@@ -130,7 +158,7 @@ export function useProducts() {
 
       return { data: productWithImage, error: null }
     } catch (err: any) {
-      console.error("Error creating product:", err)
+      console.error("[v0] Error creating product:", err)
       return { data: null, error: err.message }
     }
   }
@@ -140,20 +168,16 @@ export function useProducts() {
     if (!user) throw new Error("User not authenticated")
 
     try {
+      const supabase = getSupabase()
       let imageUrl = updates.image_url
 
-      // If there's a new image
       if (newImageFile) {
-        // Delete old image if exists
         if (updates.image_url) {
           await deleteProductImage(updates.image_url)
         }
-
-        // Upload new image
         imageUrl = await uploadProductImage(newImageFile, productId, user.id)
       }
 
-      // Update product
       const { data, error: updateError } = await supabase
         .from("products")
         .update({
@@ -166,13 +190,12 @@ export function useProducts() {
         .eq("user_id", user.id)
         .select(`
           *,
-          categories (id, name, icon)
+          categories (id, name, icon, color)
         `)
         .single()
 
       if (updateError) throw updateError
 
-      // Update local state
       setProducts((prev) => prev.map((p) => (p.id === productId ? data : p)))
 
       return { data, error: null }
@@ -187,6 +210,7 @@ export function useProducts() {
     if (!user) throw new Error("User not authenticated")
 
     try {
+      const supabase = getSupabase()
       const { error: deleteError } = await supabase
         .from("products")
         .update({ is_active: false })
@@ -195,7 +219,6 @@ export function useProducts() {
 
       if (deleteError) throw deleteError
 
-      // Update local state
       setProducts((prev) => prev.filter((p) => p.id !== productId))
 
       return { error: null }
@@ -209,11 +232,12 @@ export function useProducts() {
   const getProductById = useCallback(
     async (productId: string) => {
       try {
+        const supabase = getSupabase()
         const { data, error } = await supabase
           .from("products")
           .select(`
           *,
-          categories (id, name, icon)
+          categories (id, name, icon, color)
         `)
           .eq("id", productId)
           .eq("user_id", user?.id)
@@ -230,10 +254,65 @@ export function useProducts() {
     [user],
   )
 
+  const getInventoryStats = useCallback(async (): Promise<{ data: InventoryStats | null; error: string | null }> => {
+    if (!user) return { data: null, error: "Not authenticated" }
+
+    try {
+      const supabase = getSupabase()
+      const { data, error: rpcError } = await supabase.rpc("get_inventory_stats", {
+        user_uuid: user.id,
+      })
+
+      if (rpcError) throw rpcError
+
+      return { data, error: null }
+    } catch (err: any) {
+      console.error("[v0] Error fetching inventory stats:", err)
+      return { data: null, error: err.message }
+    }
+  }, [user])
+
+  const searchProducts = useCallback(
+    async (filters: {
+      search?: string
+      category?: string | null
+      stockFilter?: "all" | "in_stock" | "out_of_stock" | "low_stock"
+      dateFrom?: string | null
+      dateTo?: string | null
+      offset?: number
+      limit?: number
+    }): Promise<{ data: SearchProductsResult | null; error: string | null }> => {
+      if (!user) return { data: null, error: "Not authenticated" }
+
+      try {
+        const supabase = getSupabase()
+        const { data, error: rpcError } = await supabase.rpc("search_products", {
+          user_uuid: user.id,
+          search_query: filters.search || null,
+          category_filter: filters.category || null,
+          stock_filter: filters.stockFilter || "all",
+          date_from: filters.dateFrom || null,
+          date_to: filters.dateTo || null,
+          offset_val: filters.offset || 0,
+          limit_val: filters.limit || 30,
+        })
+
+        if (rpcError) throw rpcError
+
+        return { data, error: null }
+      } catch (err: any) {
+        console.error("[v0] Error searching products:", err)
+        return { data: null, error: err.message }
+      }
+    },
+    [user],
+  )
+
   // Real-time subscription
   useEffect(() => {
     if (!user) return
 
+    const supabase = getSupabase()
     const channel = supabase
       .channel("products-changes")
       .on(
@@ -280,6 +359,8 @@ export function useProducts() {
     updateProduct,
     deleteProduct,
     getProductById,
+    getInventoryStats, // Exported new function
+    searchProducts, // Exported new function
   }
 }
 
@@ -289,7 +370,6 @@ export function useProducts() {
 
 async function uploadProductImage(file: File, productId: string, userId: string): Promise<string> {
   try {
-    // Validations
     if (!file.type.startsWith("image/")) {
       throw new Error("File must be an image")
     }
@@ -298,20 +378,18 @@ async function uploadProductImage(file: File, productId: string, userId: string)
       throw new Error("Image must not exceed 5MB")
     }
 
-    // Generate unique filename
+    const supabase = getSupabase()
     const fileExt = file.name.split(".").pop()
     const fileName = `${productId}.${fileExt}`
     const filePath = `${userId}/${fileName}`
 
-    // Upload to Storage
     const { data, error } = await supabase.storage.from("product-images").upload(filePath, file, {
       cacheControl: "3600",
-      upsert: true, // Replace if exists
+      upsert: true,
     })
 
     if (error) throw error
 
-    // Get public URL
     const {
       data: { publicUrl },
     } = supabase.storage.from("product-images").getPublicUrl(filePath)
@@ -325,17 +403,16 @@ async function uploadProductImage(file: File, productId: string, userId: string)
 
 async function deleteProductImage(imageUrl: string): Promise<void> {
   try {
-    // Extract path from URL
     const urlParts = imageUrl.split("/product-images/")
     if (urlParts.length < 2) return
 
     const filePath = urlParts[1]
+    const supabase = getSupabase()
 
     const { error } = await supabase.storage.from("product-images").remove([filePath])
 
     if (error) throw error
   } catch (err) {
     console.error("Error deleting image:", err)
-    // Don't throw error here to not interrupt the flow
   }
 }
