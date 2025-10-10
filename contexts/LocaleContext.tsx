@@ -2,8 +2,8 @@
 
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
-import { en } from "@/locales/en"
-import { es } from "@/locales/es"
+import { en } from "@/locales/en/index"
+import { es } from "@/locales/es/index"
 
 type Locale = "en" | "es"
 

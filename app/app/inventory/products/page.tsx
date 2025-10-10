@@ -458,32 +458,32 @@ export default function ProductsPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-900">
               {t("products.title")} <span className="italic font-light text-neutral-600">{t("products.subtitle")}</span>
             </h1>
             <p className="text-sm sm:text-base text-neutral-600 mt-2">{t("products.description")}</p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <Button
               variant="outline"
               size="icon"
               onClick={() => setIsTutorialOpen(true)}
-              className="bg-white/60 backdrop-blur-sm"
+              className="bg-white/60 backdrop-blur-sm flex-shrink-0"
             >
               <FiInfo className="w-4 h-4" />
             </Button>
 
             <Button
-              className="bg-neutral-900 hover:bg-neutral-800 w-full sm:w-auto"
+              className="bg-neutral-900 hover:bg-neutral-800 flex-1 sm:flex-initial whitespace-nowrap"
               onClick={() => {
                 resetForm()
                 setIsCreateDialogOpen(true)
               }}
             >
               <FiPlus className="w-4 h-4 mr-2" />
-              {t("products.addProduct")}
+              <span className="truncate">{t("products.addProduct")}</span>
             </Button>
           </div>
         </div>

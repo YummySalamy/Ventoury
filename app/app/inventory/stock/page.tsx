@@ -74,7 +74,7 @@ export default function StockPage() {
     <div className="p-4 sm:p-6 md:p-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+        <div className="flex flex-col gap-4 mb-6 sm:mb-8">
           <div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-900">
               {t("nav.stock")} <span className="italic font-light text-neutral-600">{t("products.subtitle")}</span>
@@ -84,29 +84,32 @@ export default function StockPage() {
             </p>
           </div>
 
-          {/* Date Range Picker */}
-          <div className="flex items-center gap-2">
-            <FiCalendar className="w-5 h-5 text-neutral-600" />
-            <input
-              type="date"
-              value={dateRange.from}
-              onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
-              className="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 transition-all"
-            />
-            <span className="text-neutral-600">-</span>
-            <input
-              type="date"
-              value={dateRange.to}
-              onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
-              className="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 transition-all"
-            />
-            <Button onClick={fetchData} variant="outline" size="sm">
-              {t("common.apply")}
-            </Button>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-2">
+            <div className="flex items-center gap-2 text-neutral-600">
+              <FiCalendar className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm font-medium">{t("common.dateRange") || "Date Range"}</span>
+            </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 sm:flex-initial">
+              <input
+                type="date"
+                value={dateRange.from}
+                onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
+                className="w-full sm:w-auto px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 transition-all"
+              />
+              <span className="hidden sm:inline text-neutral-600">-</span>
+              <input
+                type="date"
+                value={dateRange.to}
+                onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
+                className="w-full sm:w-auto px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 transition-all"
+              />
+              <Button onClick={fetchData} variant="outline" size="sm" className="w-full sm:w-auto bg-transparent">
+                {t("common.apply")}
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
           <StockStatsCard
             title="Valor Total Inventario"

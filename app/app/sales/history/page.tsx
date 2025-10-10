@@ -64,7 +64,7 @@ export default function SalesHistoryPage() {
   const { t } = useTranslation()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState("")
-  const [paymentType, setPaymentType] = useState<"cash" | "credit" | "debit" | "transfer">("cash")
+  const [paymentType, setPaymentType] = useState<"cash" | "credit" | "debit" | "transfer">("credit")
   const [cart, setCart] = useState<CartItem[]>([])
   const [selectedProduct, setSelectedProduct] = useState("")
   const [quantity, setQuantity] = useState("1")
@@ -246,7 +246,7 @@ export default function SalesHistoryPage() {
   const resetForm = () => {
     setCart([])
     setSelectedCustomer("")
-    setPaymentType("cash")
+    setPaymentType("credit") // Reset to default credit
     setNotes("")
     setFirstDueDate("")
     setQuantity("1")

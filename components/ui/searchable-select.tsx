@@ -140,7 +140,6 @@ export function SearchableSelect<T>({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 pr-9 h-10"
-                autoFocus
               />
               {searchQuery && (
                 <button

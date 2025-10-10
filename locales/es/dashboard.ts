@@ -1,0 +1,16 @@
+export const dashboard = {
+  title: "Panel",
+  subtitle: "General",
+  welcomeMessage: "Esto es lo que está pasando con tu negocio hoy.",
+  totalRevenue: "Ingresos Totales",
+  activeCustomers: "Clientes Activos",
+  productsInStock: "Productos en Stock",
+  salesToday: "Ventas Hoy",
+  lowStock: "stock bajo",
+  recentActivity: "Actividad",
+  activitySubtitle: "Reciente",
+  noActivity: "No hay actividad reciente",
+  errorLoading: "Error al cargar datos del panel",
+  unableToLoad: "No se pudo cargar la actividad reciente",
+  manageWithConfidence: "Gestiona tu inventario con confianza",
+}

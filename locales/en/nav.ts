@@ -1,0 +1,20 @@
+// Navigation and sidebar translations
+export const nav = {
+  dashboard: "Dashboard",
+  inventory: "Inventory",
+  products: "Products",
+  categories: "Categories",
+  stock: "Stock",
+  sales: "Sales",
+  allHistory: "All History",
+  reports: "Reports",
+  accountsReceivable: "Accounts Receivable",
+  customers: "Customers",
+  allCustomers: "All Customers",
+  accounting: "Accounting",
+  income: "Income",
+  expenses: "Expenses",
+  balance: "Balance",
+  webStore: "Web Store",
+  settings: "Settings",
+}

@@ -1,0 +1,80 @@
+export const webstore = {
+  title: "Tienda",
+  titleItalic: "Web",
+  description: "Administra la configuración y apariencia de tu tienda en línea",
+  storeStatus: "Estado de la Tienda",
+  storeStatusDesc: "Activa o desactiva tu tienda web pública",
+  yourStoreIsLive: "Tu tienda está activa en",
+  general: "General",
+  appearance: "Apariencia",
+  domain: "Dominio",
+  storeInformation: "Información de la Tienda",
+  storeInformationDesc: "Información básica sobre tu tienda en línea",
+  businessName: "Nombre del Negocio",
+  businessNamePlaceholder: "Mi Tienda Increíble",
+  description: "Descripción",
+  descriptionPlaceholder: "Cuéntale a los clientes sobre tu tienda...",
+  storeUrlSlug: "URL de la Tienda",
+  storeUrlSlugHelp: "Solo se permiten letras minúsculas, números y guiones",
+  phoneNumber: "Número de Teléfono",
+  phoneNumberPlaceholder: "3216371230",
+  address: "Dirección",
+  addressPlaceholder: "Calle 123, Ciudad, País",
+  previewStore: "Vista Previa de la Tienda",
+  saveSettings: "Guardar Configuración",
+  saving: "Guardando...",
+  uploading: "Subiendo...",
+  settingsSaved: "Configuración guardada",
+  settingsSavedDesc: "La configuración de tu tienda web se ha actualizado exitosamente",
+  saveFailed: "Error al guardar",
+  saveFailedDesc: "Error al guardar la configuración",
+  invalidSlug: "URL inválida",
+  invalidSlugDesc: "La URL solo puede contener letras minúsculas, números y guiones",
+  slugTaken: "URL en uso",
+  slugTakenDesc: "Esta URL ya está en uso",
+
+  // Banner
+  storeBannerPreview: "Vista Previa del Banner",
+  storeBannerPreviewDesc: "Ve cómo se verá tu tienda para los clientes",
+  uploadLogo: "Subir Logo",
+  removeLogo: "Eliminar Logo",
+
+  // Appearance
+  brandColors: "Colores de Marca",
+  brandColorsDesc: "Personaliza el esquema de colores de tu tienda",
+  primaryColor: "Color Primario",
+  secondaryColor: "Color Secundario",
+  preview: "Vista Previa",
+
+  // Domain
+  customDomain: "Dominio Personalizado",
+  customDomainDesc: "Conecta tu propio dominio a tu tienda",
+  customDomainComingSoon:
+    "El soporte para dominios personalizados estará disponible pronto. Podrás conectar tu propio dominio como tienda.tudominio.com a tu tienda.",
+
+  // Tutorial/Guide
+  guide: {
+    title: "Guía de Tienda Web",
+    description: "Aprende cómo configurar y personalizar tu tienda en línea",
+    storeStatus: "Estado de la Tienda",
+    storeStatusDesc:
+      "Activa/desactiva tu tienda. Cuando está activa, los clientes pueden navegar y comprar tus productos en línea.",
+    generalSettings: "Configuración General",
+    businessName: "Nombre del Negocio:",
+    businessNameDesc: "El nombre de visualización de tu tienda (obligatorio)",
+    description: "Descripción:",
+    descriptionDesc: "Cuéntale a los clientes sobre tu negocio",
+    storeUrl: "URL de la Tienda:",
+    storeUrlDesc: "URL personalizada para tu tienda (ej., /store/mi-tienda)",
+    phoneNumber: "Número de Teléfono:",
+    phoneNumberDesc: "Número de contacto con código de país",
+    address: "Dirección:",
+    addressDesc: "La ubicación de tu negocio",
+    appearance: "Apariencia",
+    appearanceDesc:
+      "Sube tu logo y personaliza los colores de tu tienda. Estos se mostrarán en tu página de tienda pública.",
+    tip: "Consejo:",
+    tipDesc:
+      "Asegúrate de guardar tus cambios usando el botón flotante de guardar que aparece cuando modificas cualquier configuración.",
+  },
+}
