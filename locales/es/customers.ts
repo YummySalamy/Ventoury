@@ -14,7 +14,7 @@ export const customers = {
   noCustomers: "No hay clientes aún. ¡Crea tu primer cliente para comenzar!",
   noMatch: "No se encontraron clientes que coincidan con tu búsqueda",
   loadingCustomers: "Cargando clientes...",
-  orders: "Pedidos",
+  orders: "Órdenes",
   totalSpent: "Total Gastado",
 
   // Form fields
@@ -165,5 +165,14 @@ export const customers = {
   deleteConfirm: "¿Estás seguro de que quieres eliminar este cliente?",
   deleteWarning: "Esta acción no se puede deshacer.",
   updateCustomerInfo: "Actualizar Información del Cliente",
-  orders: "Órdenes",
+
+  // Notifications for toast messages
+  notifications: {
+    created: "Cliente creado exitosamente",
+    updated: "Cliente actualizado exitosamente",
+    deleted: "Cliente eliminado exitosamente",
+    createFailed: "Error al crear cliente",
+    updateFailed: "Error al actualizar cliente",
+    deleteFailed: "Error al eliminar cliente",
+  },
 }

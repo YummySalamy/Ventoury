@@ -55,4 +55,34 @@ export const categories = {
 
   // Labels
   marketplace: "Tienda",
+
+  // Notifications
+  notifications: {
+    created: "Categoría creada exitosamente",
+    updated: "Categoría actualizada exitosamente",
+    deleted: "Categoría eliminada exitosamente",
+    createFailed: "Error al crear categoría",
+    updateFailed: "Error al actualizar categoría",
+    deleteFailed: "Error al eliminar categoría",
+  },
+
+  // Valuation
+  valuation: {
+    title: "Valorización de Categoría",
+    atCost: "Al Costo",
+    atWholesale: "Al Mayorista",
+    atRetail: "Al Minorista",
+    potentialProfitWholesale: "Ganancia Potencial (Mayorista)",
+    potentialProfitRetail: "Ganancia Potencial (Minorista)",
+    totalStock: "Stock Total",
+    viewReport: "Ver Reporte",
+    reportTitle: "Reporte de Valorización de Categoría",
+    reportDescription: "Desglose detallado del valor del inventario y potencial de ganancia",
+    investment: "Inversión (Costo)",
+    wholesaleValue: "Valor Mayorista",
+    retailValue: "Valor Minorista",
+    profitPotential: "Potencial de Ganancia",
+    wholesaleProfit: "Ganancia Mayorista",
+    retailProfit: "Ganancia Minorista",
+  },
 }

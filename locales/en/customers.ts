@@ -15,7 +15,7 @@ export const customers = {
   noCustomers: "No customers yet. Create your first customer to get started!",
   noMatch: "No customers found matching your search",
   loadingCustomers: "Loading customers...",
-  orders: "Orders",
+  orders: "Órdenes",
   totalSpent: "Total Spent",
 
   // Form fields
@@ -164,4 +164,14 @@ export const customers = {
   deleteConfirm: "Are you sure you want to delete this customer?",
   deleteWarning: "This action cannot be undone.",
   updateCustomerInfo: "Update Customer Info",
+
+  // Notifications for toast messages
+  notifications: {
+    created: "Customer created successfully",
+    updated: "Customer updated successfully",
+    deleted: "Customer deleted successfully",
+    createFailed: "Failed to create customer",
+    updateFailed: "Failed to update customer",
+    deleteFailed: "Failed to delete customer",
+  },
 }

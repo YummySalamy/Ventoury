@@ -24,6 +24,7 @@ import { FilterDialog } from "@/components/products/FilterDialog"
 import { TutorialDialog } from "@/components/products/TutorialDialog"
 import { FormTutorialDialog } from "@/components/products/FormTutorialDialog"
 import { ProductHistoryDialog } from "@/components/products/ProductHistoryDialog"
+import { DeleteProductDialog } from "@/components/products/DeleteProductDialog"
 
 export default function ProductsPage() {
   const { t } = useLocale()
@@ -53,12 +54,15 @@ export default function ProductsPage() {
   const [isTutorialOpen, setIsTutorialOpen] = useState(false)
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false)
   const [isFormTutorialOpen, setIsFormTutorialOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [productToDelete, setProductToDelete] = useState<{ id: string; name: string } | null>(null)
 
   // Data states
   const [products, setProducts] = useState<Product[]>([])
   const [stats, setStats] = useState<InventoryStats | null>(null)
   const [productHistory, setProductHistory] = useState<ProductHistory[]>([])
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [selectedProductForHistory, setSelectedProductForHistory] = useState<Product | null>(null)
 
   // Loading states
   const [statsLoading, setStatsLoading] = useState(true)
@@ -180,9 +184,33 @@ export default function ProductsPage() {
   }, [appliedFilters])
 
   const handleLoadMore = async () => {
+    if (!hasMore || isLoadingMore) return
+
     setIsLoadingMore(true)
-    setCurrentPage((prev) => prev + 1)
-    await fetchProductsWithFilters(false)
+    const nextPage = currentPage + 1
+    setCurrentPage(nextPage)
+
+    const offset = nextPage * ITEMS_PER_PAGE
+
+    const { data, error } = await searchProducts({
+      search: appliedFilters.search || undefined,
+      category: appliedFilters.category || undefined,
+      stockFilter: appliedFilters.stockFilter,
+      dateFrom: appliedFilters.dateFrom || undefined,
+      dateTo: appliedFilters.dateTo || undefined,
+      offset,
+      limit: ITEMS_PER_PAGE,
+    })
+
+    if (!error && data) {
+      setProducts((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id))
+        const newProducts = data.products.filter((p) => !existingIds.has(p.id))
+        return [...prev, ...newProducts]
+      })
+      setHasMore(data.products.length === ITEMS_PER_PAGE)
+    }
+
     setIsLoadingMore(false)
   }
 
@@ -246,8 +274,8 @@ export default function ProductsPage() {
 
     if (!formData.sku) {
       toast({
-        title: t("products.validationError"),
-        description: t("products.skuRequired"),
+        title: t("products.notifications.validationError"),
+        description: t("products.notifications.skuRequired"),
         variant: "destructive",
       })
       return
@@ -289,8 +317,8 @@ export default function ProductsPage() {
       if (error) throw new Error(error)
 
       toast({
-        title: t("products.productCreated"),
-        description: `${formData.name} ${t("products.productCreatedDesc")}`,
+        title: t("products.notifications.created"),
+        description: t("products.notifications.createdDesc", { name: formData.name }),
       })
 
       resetForm()
@@ -299,7 +327,7 @@ export default function ProductsPage() {
     } catch (err: any) {
       console.error("[v0] Error creating product:", err)
       toast({
-        title: t("products.errorCreating"),
+        title: t("products.notifications.createFailed"),
         description: err.message,
         variant: "destructive",
       })
@@ -344,8 +372,8 @@ export default function ProductsPage() {
 
     if (!formData.sku) {
       toast({
-        title: t("products.validationError"),
-        description: t("products.skuRequired"),
+        title: t("products.notifications.validationError"),
+        description: t("products.notifications.skuRequired"),
         variant: "destructive",
       })
       return
@@ -387,8 +415,8 @@ export default function ProductsPage() {
       if (error) throw new Error(error)
 
       toast({
-        title: t("products.productUpdated"),
-        description: `${formData.name} ${t("products.productUpdatedDesc")}`,
+        title: t("products.notifications.updated"),
+        description: t("products.notifications.updatedDesc", { name: formData.name }),
       })
 
       resetForm()
@@ -398,7 +426,7 @@ export default function ProductsPage() {
     } catch (err: any) {
       console.error("[v0] Error updating product:", err)
       toast({
-        title: t("products.errorUpdating"),
+        title: t("products.notifications.updateFailed"),
         description: err.message,
         variant: "destructive",
       })
@@ -408,25 +436,32 @@ export default function ProductsPage() {
   }
 
   const handleDelete = async (productId: string, productName: string) => {
-    if (!confirm(`${t("products.deleteConfirmDesc")} ${productName}?`)) return
+    setProductToDelete({ id: productId, name: productName })
+    setIsDeleteDialogOpen(true)
+  }
 
-    setIsDeleting(productId)
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return
+
+    setIsDeleting(productToDelete.id)
 
     try {
-      const { error } = await deleteProduct(productId)
+      const { error } = await deleteProduct(productToDelete.id)
       if (error) throw new Error(error)
 
       toast({
-        title: t("products.productDeleted"),
-        description: `${productName} ${t("products.productDeletedDesc")}`,
+        title: t("products.notifications.deleted"),
+        description: t("products.notifications.deletedDesc", { name: productToDelete.name }),
       })
 
-      setProducts((prev) => prev.filter((p) => p.id !== productId))
+      setProducts((prev) => prev.filter((p) => p.id !== productToDelete.id))
       fetchProductsWithFilters(true)
+      setIsDeleteDialogOpen(false)
+      setProductToDelete(null)
     } catch (err: any) {
       console.error("[v0] Error deleting product:", err)
       toast({
-        title: t("products.errorDeleting"),
+        title: t("products.notifications.deleteFailed"),
         description: err.message,
         variant: "destructive",
       })
@@ -435,11 +470,12 @@ export default function ProductsPage() {
     }
   }
 
-  const handleViewHistory = async (productId: string) => {
+  const handleViewHistory = async (product: Product) => {
+    setSelectedProductForHistory(product)
     setHistoryLoading(true)
     setIsHistoryDialogOpen(true)
 
-    const { data, error } = await getProductHistory(productId)
+    const { data, error } = await getProductHistory(product.id)
     if (!error && data) {
       setProductHistory(data)
     }
@@ -666,9 +702,25 @@ export default function ProductsPage() {
 
         <ProductHistoryDialog
           isOpen={isHistoryDialogOpen}
-          onClose={() => setIsHistoryDialogOpen(false)}
+          onClose={() => {
+            setIsHistoryDialogOpen(false)
+            setSelectedProductForHistory(null)
+          }}
+          product={selectedProductForHistory}
           history={productHistory}
           loading={historyLoading}
+          t={t}
+        />
+
+        <DeleteProductDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => {
+            setIsDeleteDialogOpen(false)
+            setProductToDelete(null)
+          }}
+          onConfirm={handleConfirmDelete}
+          productName={productToDelete?.name || ""}
+          isDeleting={isDeleting === productToDelete?.id}
           t={t}
         />
       </motion.div>

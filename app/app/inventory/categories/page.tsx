@@ -15,6 +15,7 @@ import {
   ImageIcon,
   ChevronRight,
   ChevronDown,
+  Eye,
 } from "lucide-react"
 import { GlassCard } from "@/components/dashboard/glass-card"
 import { Button } from "@/components/ui/button"
@@ -55,6 +56,9 @@ export default function CategoriesPage() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState("")
 
+  const [valuationModalOpen, setValuationModalOpen] = useState(false)
+  const [selectedCategoryForValuation, setSelectedCategoryForValuation] = useState<any>(null)
+
   const { categories, loading, error, createCategory, updateCategory, deleteCategory, uploadCategoryImage } =
     useCategories()
   const { toast } = useToast()
@@ -83,15 +87,15 @@ export default function CategoriesPage() {
         const { error } = await updateCategory(editingCategory.id, categoryData)
         if (error) throw new Error(error)
         toast({
-          title: "Category updated!",
-          description: `${formData.name} has been updated.`,
+          title: t("categories.notifications.updated"),
+          description: t("categories.notifications.updatedDesc", { name: formData.name }),
         })
       } else {
         const { error } = await createCategory(categoryData)
         if (error) throw new Error(error)
         toast({
-          title: "Category created!",
-          description: `${formData.name} has been added.`,
+          title: t("categories.notifications.created"),
+          description: t("categories.notifications.createdDesc", { name: formData.name }),
         })
       }
 
@@ -109,8 +113,10 @@ export default function CategoriesPage() {
       setIsDialogOpen(false)
     } catch (err: any) {
       toast({
-        title: editingCategory ? "Error updating category" : "Error creating category",
-        description: err.message || "Failed to save category",
+        title: editingCategory
+          ? t("categories.notifications.updateFailed")
+          : t("categories.notifications.createFailed"),
+        description: err.message || t("categories.notifications.saveFailed"),
         variant: "destructive",
       })
     } finally {
@@ -133,7 +139,7 @@ export default function CategoriesPage() {
   }
 
   const handleDelete = async (categoryId: string, categoryName: string) => {
-    if (!confirm(`Are you sure you want to delete ${categoryName}?`)) return
+    if (!confirm(t("categories.notifications.deleteConfirm", { name: categoryName }))) return
 
     setIsDeleting(categoryId)
 
@@ -142,13 +148,13 @@ export default function CategoriesPage() {
       if (error) throw new Error(error)
 
       toast({
-        title: "Category deleted",
-        description: `${categoryName} has been removed.`,
+        title: t("categories.notifications.deleted"),
+        description: t("categories.notifications.deletedDesc", { name: categoryName }),
       })
     } catch (err: any) {
       toast({
-        title: "Error deleting category",
-        description: err.message || "Failed to delete category",
+        title: t("categories.notifications.deleteFailed"),
+        description: err.message || t("categories.notifications.deleteError"),
         variant: "destructive",
       })
     } finally {
@@ -176,11 +182,16 @@ export default function CategoriesPage() {
 
   const totalCategories = categories.length
   const totalProducts = categories.reduce((sum, cat) => sum + (cat.product_count || 0), 0)
-  const totalValue = categories.reduce((sum, cat) => sum + (cat.total_value || 0), 0)
+  const totalValue = categories.reduce((sum, cat) => sum + (cat.valuation?.at_retail || 0), 0)
 
   const filteredCategories = parentCategories.filter((cat) =>
     cat.name.toLowerCase().includes(searchQuery.toLowerCase()),
   )
+
+  const handleViewValuation = (category: any) => {
+    setSelectedCategoryForValuation(category)
+    setValuationModalOpen(true)
+  }
 
   return (
     <div className="p-4 sm:p-6 md:p-8">
@@ -528,12 +539,31 @@ export default function CategoriesPage() {
                           <span className="font-semibold text-neutral-900">{category.subcategories.length}</span>
                         </div>
                       )}
-                      <div className="flex justify-between text-sm">
-                        <span className="text-neutral-600">{t("categories.totalValue")}</span>
-                        <span className="font-semibold text-neutral-900">
-                          ${(category.total_value || 0).toFixed(2)}
-                        </span>
-                      </div>
+                      {category.valuation && (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-neutral-600">{t("categories.valuation.totalStock")}</span>
+                            <span className="font-semibold text-neutral-900">
+                              {category.valuation.total_stock || 0}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-neutral-600">{t("categories.valuation.atRetail")}</span>
+                            <span className="font-semibold text-green-600">
+                              ${(category.valuation.at_retail || 0).toFixed(2)}
+                            </span>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full mt-2 bg-transparent"
+                            onClick={() => handleViewValuation(category)}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            {t("categories.valuation.viewReport")}
+                          </Button>
+                        </>
+                      )}
                     </div>
 
                     {expandedCategories.has(category.id) &&
@@ -577,6 +607,76 @@ export default function CategoriesPage() {
           </div>
         )}
       </motion.div>
+
+      <Dialog open={valuationModalOpen} onOpenChange={setValuationModalOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              {t("categories.valuation.reportTitle")} - {selectedCategoryForValuation?.name}
+            </DialogTitle>
+            <DialogDescription>{t("categories.valuation.reportDescription")}</DialogDescription>
+          </DialogHeader>
+
+          {selectedCategoryForValuation?.valuation && (
+            <div className="space-y-4 py-4">
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
+                  <p className="text-sm text-blue-700 mb-1">{t("categories.valuation.investment")}</p>
+                  <p className="text-2xl font-bold text-blue-900">
+                    ${(selectedCategoryForValuation.valuation.at_cost || 0).toFixed(2)}
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg bg-purple-50 border border-purple-200">
+                  <p className="text-sm text-purple-700 mb-1">{t("categories.valuation.wholesaleValue")}</p>
+                  <p className="text-2xl font-bold text-purple-900">
+                    ${(selectedCategoryForValuation.valuation.at_wholesale || 0).toFixed(2)}
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+                  <p className="text-sm text-green-700 mb-1">{t("categories.valuation.retailValue")}</p>
+                  <p className="text-2xl font-bold text-green-900">
+                    ${(selectedCategoryForValuation.valuation.at_retail || 0).toFixed(2)}
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg bg-amber-50 border border-amber-200">
+                  <p className="text-sm text-amber-700 mb-1">{t("categories.valuation.totalStock")}</p>
+                  <p className="text-2xl font-bold text-amber-900">
+                    {selectedCategoryForValuation.valuation.total_stock || 0}
+                  </p>
+                </div>
+              </div>
+
+              {/* Profit Potential */}
+              <div className="space-y-3 pt-4 border-t">
+                <h3 className="font-semibold text-lg">{t("categories.valuation.profitPotential")}</h3>
+
+                <div className="p-4 rounded-lg bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-cyan-700">{t("categories.valuation.wholesaleProfit")}</span>
+                    <span className="text-xl font-bold text-cyan-900">
+                      ${(selectedCategoryForValuation.valuation.potential_profit_wholesale || 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-emerald-700">{t("categories.valuation.retailProfit")}</span>
+                    <span className="text-xl font-bold text-emerald-900">
+                      ${(selectedCategoryForValuation.valuation.potential_profit_retail || 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -53,4 +53,34 @@ export const categories = {
 
   // Badges
   marketplace: "Marketplace",
+
+  // Notifications
+  notifications: {
+    created: "Category created successfully",
+    updated: "Category updated successfully",
+    deleted: "Category deleted successfully",
+    createFailed: "Failed to create category",
+    updateFailed: "Failed to update category",
+    deleteFailed: "Failed to delete category",
+  },
+
+  // Valuation
+  valuation: {
+    title: "Category Valuation",
+    atCost: "At Cost",
+    atWholesale: "At Wholesale",
+    atRetail: "At Retail",
+    potentialProfitWholesale: "Potential Profit (Wholesale)",
+    potentialProfitRetail: "Potential Profit (Retail)",
+    totalStock: "Total Stock",
+    viewReport: "View Report",
+    reportTitle: "Category Valuation Report",
+    reportDescription: "Detailed breakdown of inventory value and profit potential",
+    investment: "Investment (Cost)",
+    wholesaleValue: "Wholesale Value",
+    retailValue: "Retail Value",
+    profitPotential: "Profit Potential",
+    wholesaleProfit: "Wholesale Profit",
+    retailProfit: "Retail Profit",
+  },
 }

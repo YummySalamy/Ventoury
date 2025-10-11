@@ -8,7 +8,7 @@ import { sales } from "./sales"
 import { customers } from "./customers"
 import { receivables } from "./receivables"
 import { reports } from "./reports"
-import { webstore } from "./webstore"
+import { webStore } from "./webstore"
 import { settings } from "./settings"
 import { invoice } from "./invoice"
 import { stock } from "./stock"
@@ -24,7 +24,7 @@ export const es = {
   customers,
   receivables,
   reports,
-  webstore,
+  webStore,
   settings,
   invoice,
   stock,

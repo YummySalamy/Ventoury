@@ -1,4 +1,4 @@
-export const webstore = {
+export const webStore = {
   title: "Tienda",
   titleItalic: "Web",
   description: "Administra la configuración y apariencia de tu tienda en línea",

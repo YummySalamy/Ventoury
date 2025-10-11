@@ -6,6 +6,8 @@ export const products = {
   addProduct: "Agregar Producto",
   editProduct: "Editar Producto",
   deleteProduct: "Eliminar Producto",
+  edit: "Editar", // Added missing translations for edit and delete actions
+  delete: "Eliminar",
   createProduct: "Crear Producto",
   updateProduct: "Actualizar Producto",
   totalProducts: "Total de Productos",
@@ -171,4 +173,73 @@ export const products = {
   deleteProductTitle: "Eliminar Producto",
   deleteProductConfirm: "¿Estás seguro de que quieres eliminar este producto?",
   deleteProductWarning: "Esta acción no se puede deshacer.",
+
+  notifications: {
+    created: "Producto creado exitosamente",
+    createdDesc: "{{name}} ha sido agregado a tu inventario",
+    updated: "Producto actualizado exitosamente",
+    updatedDesc: "{{name}} ha sido actualizado exitosamente",
+    deleted: "Producto eliminado exitosamente",
+    deletedDesc: "{{name}} ha sido eliminado de tu inventario",
+    deleteConfirm: "¿Estás seguro de que quieres eliminar {{name}}?",
+    createFailed: "Error al crear producto",
+    updateFailed: "Error al actualizar producto",
+    deleteFailed: "Error al eliminar producto",
+    validationError: "Error de validación",
+    skuRequired: "El SKU es obligatorio",
+    marketplaceUpdated: "Visibilidad en tienda actualizada",
+    marketplaceUpdateFailed: "Error al actualizar visibilidad en tienda",
+  },
+
+  history: {
+    title: "Historial del Producto",
+    productInfo: "Info del Producto",
+    changeHistory: "Historial de Cambios",
+    noHistory: "No hay historial disponible para este producto",
+    changeType: {
+      creation: "Creado",
+      restock: "Reabastecido",
+      sale: "Venta",
+      price_update: "Actualización de Precio",
+      stock_update: "Actualización de Stock",
+    },
+  },
+
+  productInfoModal: {
+    productInfo: "Información del Producto",
+    stockInformation: "Información de Stock",
+    pricingInformation: "Información de Precios",
+    currentStock: "Stock Actual",
+    createdAt: "Creado el",
+    quantityAdded: "Cantidad Agregada",
+    quantitySold: "Cantidad Vendida",
+    initialPrice: "Precio Inicial",
+    changeType: {
+      creation: "Creado",
+      restock: "Reabastecido",
+      sale: "Venta",
+      price_update: "Actualización de Precio",
+      stock_update: "Actualización de Stock",
+    },
+  },
+
+  // Additional translations for product info modal
+  productInfo: "Información del Producto",
+  stockInformation: "Información de Stock",
+  pricingInformation: "Información de Precios",
+  currentStock: "Stock Actual",
+  createdAt: "Creado el",
+  quantityAdded: "Cantidad Agregada",
+  quantitySold: "Cantidad Vendida",
+  initialPrice: "Precio Inicial",
+  changeType: {
+    creation: "Creado",
+    restock: "Reabastecido",
+    sale: "Venta",
+    price_update: "Actualización de Precio",
+    stock_update: "Actualización de Stock",
+  },
+
+  // Added missing history translation at root level
+  history: "Historial",
 }

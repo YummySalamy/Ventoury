@@ -23,6 +23,7 @@ interface SearchableSelectProps<T> {
   renderTrigger?: (selectedItem: T | undefined) => ReactNode
   renderItem: (item: T) => ReactNode
   renderSelectedPreview?: (item: T) => ReactNode
+  renderFilterButton?: () => ReactNode
 
   // Item configuration
   getItemId: (item: T) => string
@@ -44,6 +45,7 @@ export function SearchableSelect<T>({
   renderTrigger,
   renderItem,
   renderSelectedPreview,
+  renderFilterButton,
   getItemId,
   getItemSearchText,
   showSearch = true,
@@ -131,25 +133,27 @@ export function SearchableSelect<T>({
             </DialogDescription>
           </DialogHeader>
 
-          {/* Search Input */}
           {showSearch && (
-            <div className="relative mb-4">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
-              <Input
-                placeholder={searchPlaceholder || t("common.search")}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-9 h-10"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <FiX className="w-4 h-4" />
-                </button>
-              )}
+            <div className="flex gap-2 mb-4">
+              <div className="relative flex-1">
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
+                <Input
+                  placeholder={searchPlaceholder || t("common.search")}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-9 h-10"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <FiX className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              {renderFilterButton && renderFilterButton()}
             </div>
           )}
 

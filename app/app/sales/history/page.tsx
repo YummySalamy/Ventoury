@@ -15,12 +15,13 @@ import {
   Search,
   Share2,
   User,
-  Package,
   CreditCard,
   Wallet,
   Calendar,
   HelpCircle,
   ImageIcon,
+  Percent,
+  Tag,
 } from "lucide-react"
 import { FiList as List, FiGrid as Grid } from "react-icons/fi"
 import { GlassCard } from "@/components/dashboard/glass-card"
@@ -40,6 +41,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select"
 import { useSales } from "@/hooks/useSales"
 import { useCustomers } from "@/hooks/useCustomers"
 import { useProducts } from "@/hooks/useProducts"
+import { useCategories } from "@/hooks/useCategories"
 import { useToast } from "@/hooks/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
@@ -48,8 +50,11 @@ import { InstallmentHelpDialog } from "@/components/sales/InstallmentHelpDialog"
 import { ShareInvoiceModal } from "@/components/sales/ShareInvoiceModal"
 import { Notification } from "@/components/ui/notification"
 import { SalesGrid } from "@/components/sales/SalesGrid"
+import { ProductSelectorWithFilters } from "@/components/sales/ProductSelectorWithFilters"
 import { useTranslation } from "@/hooks/useTranslation"
 import { formatCompactNumber, formatCurrency } from "@/lib/format"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Switch } from "@/components/ui/switch"
 
 interface CartItem {
   product_id: string
@@ -75,6 +80,17 @@ export default function SalesHistoryPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
 
+  const [discountEnabled, setDiscountEnabled] = useState(false)
+  const [discountType, setDiscountType] = useState<"percentage" | "fixed">("percentage")
+  const [discountValue, setDiscountValue] = useState("")
+
+  const [installmentFrequency, setInstallmentFrequency] = useState<"weekly" | "biweekly" | "monthly" | "custom">(
+    "monthly",
+  )
+  const [customIntervalDays, setCustomIntervalDays] = useState("")
+
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("all")
+
   const [notification, setNotification] = useState<{
     open: boolean
     type: "success" | "error"
@@ -97,6 +113,7 @@ export default function SalesHistoryPage() {
   const { sales, loading, createSale } = useSales()
   const { customers } = useCustomers()
   const { products } = useProducts()
+  const { categories, loading: categoriesLoading } = useCategories()
   const { toast } = useToast()
 
   const [viewMode, setViewMode] = useState<"table" | "grid">(() => {
@@ -115,6 +132,11 @@ export default function SalesHistoryPage() {
 
   const [statModalOpen, setStatModalOpen] = useState(false)
   const [selectedStat, setSelectedStat] = useState<{ label: string; value: number } | null>(null)
+
+  const filteredProducts = useMemo(() => {
+    if (selectedCategoryFilter === "all") return products
+    return products.filter((p) => p.categories?.id === selectedCategoryFilter)
+  }, [products, selectedCategoryFilter])
 
   const filteredSales = useMemo(() => {
     return sales.filter((sale: any) => {
@@ -182,14 +204,28 @@ export default function SalesHistoryPage() {
       setNotification({
         open: true,
         type: "error",
-        title: "Invalid Quantity",
-        content: "Please enter a valid quantity greater than 0",
+        title: t("sales.notifications.invalidQuantityTitle"),
+        content: t("sales.notifications.invalidQuantity"),
       })
       return
     }
 
     const product = products.find((p) => p.id === selectedProduct)
     if (!product) return
+
+    if (product.stock_quantity < qty) {
+      setNotification({
+        open: true,
+        type: "error",
+        title: t("sales.notifications.insufficientStockTitle"),
+        content: t("sales.notifications.insufficientStock", {
+          product: product.name,
+          available: product.stock_quantity,
+          requested: qty,
+        }),
+      })
+      return
+    }
 
     const existingItem = cart.find((item) => item.product_id === selectedProduct)
     if (existingItem) {
@@ -253,6 +289,12 @@ export default function SalesHistoryPage() {
     setSelectedProduct("")
     setInstallmentCount(3)
     setInstallmentError("")
+    setDiscountEnabled(false) // Reset discount state
+    setDiscountType("percentage")
+    setDiscountValue("")
+    setInstallmentFrequency("monthly") // Reset installment frequency
+    setCustomIntervalDays("")
+    setSelectedCategoryFilter("all") // Reset category filter
   }
 
   const handleCreateSale = async () => {
@@ -260,8 +302,8 @@ export default function SalesHistoryPage() {
       setNotification({
         open: true,
         type: "error",
-        title: "Customer Required",
-        content: "Please select a customer before creating a sale",
+        title: t("sales.notifications.customerRequiredTitle"),
+        content: t("sales.notifications.customerRequired"),
       })
       return
     }
@@ -270,8 +312,8 @@ export default function SalesHistoryPage() {
       setNotification({
         open: true,
         type: "error",
-        title: "Cart is Empty",
-        content: "Please add at least one product to the cart",
+        title: t("sales.notifications.cartEmptyTitle"),
+        content: t("sales.notifications.cartEmpty"),
       })
       return
     }
@@ -280,8 +322,8 @@ export default function SalesHistoryPage() {
       setNotification({
         open: true,
         type: "error",
-        title: "Invalid Installment Details",
-        content: "Please set a valid first installment due date and ensure at least 1 installment.",
+        title: t("sales.notifications.invalidInstallmentTitle"),
+        content: t("sales.notifications.invalidInstallment"),
       })
       return
     }
@@ -308,8 +350,11 @@ export default function SalesHistoryPage() {
       setNotification({
         open: true,
         type: "success",
-        title: "Sale Created Successfully!",
-        content: `Sale has been recorded with ${cart.length} item(s) for $${totalAmount.toFixed(2)}`,
+        title: t("sales.notifications.saleCreatedTitle"),
+        content: t("sales.notifications.saleCreated", {
+          items: cart.length,
+          total: finalTotal.toFixed(2), // Use finalTotal
+        }),
       })
 
       // Reset form
@@ -319,8 +364,8 @@ export default function SalesHistoryPage() {
       setNotification({
         open: true,
         type: "error",
-        title: "Failed to Create Sale",
-        content: err.message || "An error occurred while creating the sale. Please try again.",
+        title: t("sales.notifications.saleFailedTitle"),
+        content: err.message || t("sales.notifications.saleFailed"),
       })
     } finally {
       setIsCreating(false)
@@ -334,7 +379,17 @@ export default function SalesHistoryPage() {
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank")
   }
 
-  const totalAmount = cart.reduce((sum, item) => sum + item.subtotal, 0)
+  const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0)
+  let discountAmount = 0
+  if (discountEnabled && discountValue) {
+    const value = Number.parseFloat(discountValue) || 0
+    if (discountType === "percentage") {
+      discountAmount = subtotal * (value / 100)
+    } else {
+      discountAmount = value
+    }
+  }
+  const finalTotal = subtotal - discountAmount
 
   const [selectedSale, setSelectedSale] = useState<any | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
@@ -344,8 +399,8 @@ export default function SalesHistoryPage() {
   const handleShareInvoice = (sale: any) => {
     if (!sale.public_token) {
       toast({
-        title: "Invoice not available",
-        description: "This sale does not have a public invoice link",
+        title: t("sales.notifications.invoiceNotAvailableTitle"),
+        description: t("sales.notifications.invoiceNotAvailable"),
         variant: "destructive",
       })
       return
@@ -356,6 +411,16 @@ export default function SalesHistoryPage() {
 
   const isCustomerSelected = selectedCustomer && selectedCustomer !== ""
   const selectedCustomerData = customers.find((c) => c.id === selectedCustomer)
+
+  const getStockStatus = (product: any) => {
+    if (product.stock_quantity === 0) {
+      return { color: "bg-red-500", text: t("sales.stockStatus.outOfStock"), textColor: "text-red-600" }
+    }
+    if (product.stock_quantity <= (product.min_stock_alert || 5)) {
+      return { color: "bg-yellow-500", text: t("sales.stockStatus.lowStock"), textColor: "text-yellow-600" }
+    }
+    return { color: "bg-green-500", text: t("sales.stockStatus.inStock"), textColor: "text-green-600" }
+  }
 
   return (
     <div className="p-4 sm:p-6 md:p-8">
@@ -370,9 +435,7 @@ export default function SalesHistoryPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-900">
-              {t("sales.title")} <span className="italic font-light text-neutral-600">{t("sales.subtitle")}</span>
-            </h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-900">{t("sales.title")}</h1>
             <p className="text-sm sm:text-base text-neutral-600 mt-2">{t("sales.description")}</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
@@ -416,6 +479,7 @@ export default function SalesHistoryPage() {
 
                 <div className="flex-1 overflow-y-auto px-1">
                   <div className="grid gap-4 sm:gap-6 py-4">
+                    {/* Customer Selection */}
                     <motion.div
                       className="grid gap-2 relative"
                       animate={{
@@ -494,69 +558,17 @@ export default function SalesHistoryPage() {
                       </div>
                     </motion.div>
 
-                    <div className="border-2 border-dashed border-neutral-300 rounded-lg p-3 sm:p-4 bg-neutral-50">
-                      <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
-                        <div className="relative w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center flex-shrink-0">
-                          <div className="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-lg" />
-                          <div className="absolute inset-0 bg-black rounded-lg" />
-                          <Package className="w-4 h-4 sm:w-5 sm:h-5 relative z-10 text-white" />
-                        </div>
-                        {t("sales.addProducts")}
-                      </h3>
-                      <div className="flex flex-col sm:grid sm:grid-cols-[1fr_100px_auto] gap-2">
-                        <SearchableSelect
-                          items={products}
-                          value={selectedProduct}
-                          onValueChange={setSelectedProduct}
-                          placeholder={t("sales.selectProduct")}
-                          searchPlaceholder={t("common.search")}
-                          emptyMessage={t("products.noProducts")}
-                          getItemId={(product) => product.id}
-                          getItemSearchText={(product) => `${product.name} ${product.sku || ""}`}
-                          renderItem={(product) => (
-                            <div className="flex items-center gap-2 sm:gap-3">
-                              {product.image_url ? (
-                                <img
-                                  src={product.image_url || "/placeholder.svg"}
-                                  alt={product.name}
-                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded object-cover flex-shrink-0"
-                                />
-                              ) : (
-                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-gradient-to-br from-black to-white flex items-center justify-center flex-shrink-0">
-                                  <ImageIcon className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">{product.name}</p>
-                                <p className="text-xs text-neutral-500">
-                                  ${product.price} • Stock: {product.stock_quantity}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                        />
-                        <div className="flex gap-2 sm:contents">
-                          <Input
-                            type="number"
-                            min="0"
-                            value={quantity}
-                            onChange={(e) => setQuantity(e.target.value)}
-                            placeholder={t("sales.qty")}
-                            className="h-10 flex-1 sm:flex-none"
-                          />
-                          <Button
-                            type="button"
-                            onClick={handleAddToCart}
-                            disabled={!selectedProduct || !quantity || Number.parseInt(quantity) <= 0}
-                            className="h-10 bg-neutral-900 hover:bg-neutral-800 px-4 sm:px-3"
-                          >
-                            <Plus className="w-4 h-4" />
-                            <span className="sm:hidden ml-2">{t("common.add")}</span>
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+                    <ProductSelectorWithFilters
+                      products={products}
+                      categories={categories || []}
+                      selectedProduct={selectedProduct}
+                      quantity={quantity}
+                      onProductChange={setSelectedProduct}
+                      onQuantityChange={setQuantity}
+                      onAddToCart={handleAddToCart}
+                    />
 
+                    {/* Cart Items */}
                     <AnimatePresence>
                       {cart.length > 0 && (
                         <motion.div
@@ -612,15 +624,91 @@ export default function SalesHistoryPage() {
                                 </div>
                               </motion.div>
                             ))}
-                            <div className="flex justify-between items-center pt-3 border-t-2 border-neutral-200 font-bold text-lg">
-                              <span>{t("sales.total")}:</span>
-                              <span className="text-green-600">${totalAmount.toFixed(2)}</span>
+
+                            <div className="border-t-2 border-neutral-200 pt-3 mt-3">
+                              <div className="flex items-center justify-between mb-3">
+                                <Label className="flex items-center gap-2 text-sm font-semibold">
+                                  <Tag className="w-4 h-4" />
+                                  {t("sales.discount.applyDiscount")}
+                                </Label>
+                                <Switch checked={discountEnabled} onCheckedChange={setDiscountEnabled} />
+                              </div>
+
+                              {discountEnabled && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: "auto" }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  className="space-y-3 bg-blue-50 p-3 rounded-lg"
+                                >
+                                  <RadioGroup value={discountType} onValueChange={(v: any) => setDiscountType(v)}>
+                                    <div className="flex items-center space-x-2">
+                                      <RadioGroupItem value="percentage" id="percentage" />
+                                      <Label htmlFor="percentage" className="flex items-center gap-2 cursor-pointer">
+                                        <Percent className="w-4 h-4" />
+                                        {t("sales.discount.percentage")}
+                                      </Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <RadioGroupItem value="fixed" id="fixed" />
+                                      <Label htmlFor="fixed" className="flex items-center gap-2 cursor-pointer">
+                                        <DollarSign className="w-4 h-4" />
+                                        {t("sales.discount.fixedAmount")}
+                                      </Label>
+                                    </div>
+                                  </RadioGroup>
+
+                                  <div className="flex gap-2">
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      max={discountType === "percentage" ? "100" : undefined}
+                                      value={discountValue}
+                                      onChange={(e) => setDiscountValue(e.target.value)}
+                                      placeholder={
+                                        discountType === "percentage"
+                                          ? t("sales.discount.enterPercentage")
+                                          : t("sales.discount.enterAmount")
+                                      }
+                                      className="flex-1"
+                                    />
+                                    <div className="flex items-center px-3 bg-white rounded-md border">
+                                      {discountType === "percentage" ? "%" : "$"}
+                                    </div>
+                                  </div>
+
+                                  {discountAmount > 0 && (
+                                    <p className="text-sm text-green-600 font-medium">
+                                      {t("sales.discount.saving")}: ${discountAmount.toFixed(2)}
+                                    </p>
+                                  )}
+                                </motion.div>
+                              )}
+                            </div>
+
+                            {/* Total Summary */}
+                            <div className="space-y-2 pt-3 border-t-2 border-neutral-200">
+                              <div className="flex justify-between items-center text-sm">
+                                <span className="text-neutral-600">{t("sales.subtotal")}:</span>
+                                <span className="font-medium">${subtotal.toFixed(2)}</span>
+                              </div>
+                              {discountEnabled && discountAmount > 0 && (
+                                <div className="flex justify-between items-center text-sm">
+                                  <span className="text-neutral-600">{t("sales.discount.discount")}:</span>
+                                  <span className="font-medium text-red-600">-${discountAmount.toFixed(2)}</span>
+                                </div>
+                              )}
+                              <div className="flex justify-between items-center font-bold text-lg pt-2 border-t">
+                                <span>{t("sales.total")}:</span>
+                                <span className="text-green-600">${finalTotal.toFixed(2)}</span>
+                              </div>
                             </div>
                           </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
 
+                    {/* Payment Method */}
                     <div className="grid gap-2">
                       <Label className="flex items-center gap-2 text-base font-semibold">
                         <div className="relative w-8 h-8 flex items-center justify-center">
@@ -663,13 +751,76 @@ export default function SalesHistoryPage() {
                       </Select>
                     </div>
 
-                    {/* Installments (if credit) */}
                     {paymentType === "credit" && (
-                      <div className="border rounded-lg p-3 sm:p-4 bg-blue-50">
-                        <h3 className="font-semibold mb-3 text-sm sm:text-base">{t("sales.installmentDetails")}</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div className="border rounded-xl p-4 sm:p-5 bg-gradient-to-br from-blue-50 to-indigo-50 backdrop-blur-sm">
+                        <h3 className="font-semibold mb-4 text-sm sm:text-base flex items-center gap-2">
+                          <Calendar className="w-5 h-5 text-blue-600" />
+                          {t("sales.installmentDetails")}
+                        </h3>
+
+                        {/* Installment Frequency - Grid of frosted glass buttons */}
+                        <div className="mb-5">
+                          <Label className="text-sm mb-3 block font-medium">{t("sales.installment.frequency")}</Label>
+                          <div className="grid grid-cols-2 gap-3">
+                            {[
+                              { value: "weekly", label: t("sales.installment.weekly") },
+                              { value: "biweekly", label: t("sales.installment.biweekly") },
+                              { value: "monthly", label: t("sales.installment.monthly") },
+                              { value: "custom", label: t("sales.installment.custom") },
+                            ].map((option) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => setInstallmentFrequency(option.value as any)}
+                                className={`
+                                  relative overflow-hidden rounded-2xl p-3 sm:p-4
+                                  transition-all duration-300 ease-out
+                                  backdrop-blur-md border-2
+                                  ${
+                                    installmentFrequency === option.value
+                                      ? "bg-black text-white border-black shadow-[0_0_20px_rgba(59,130,246,0.5)]"
+                                      : "bg-white/40 text-neutral-700 border-white/60 hover:bg-white/60 hover:border-white/80"
+                                  }
+                                `}
+                              >
+                                <span className="relative z-10 font-medium text-sm">{option.label}</span>
+                                {installmentFrequency === option.value && (
+                                  <motion.div
+                                    layoutId="installment-indicator"
+                                    className="absolute inset-0 bg-gradient-to-br from-black to-neutral-800"
+                                    initial={false}
+                                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                  />
+                                )}
+                              </button>
+                            ))}
+                          </div>
+
+                          {installmentFrequency === "custom" && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="mt-3"
+                            >
+                              <Label className="text-xs text-neutral-600 mb-2 block">
+                                {t("sales.installment.customDays")}
+                              </Label>
+                              <Input
+                                type="number"
+                                min="1"
+                                value={customIntervalDays}
+                                onChange={(e) => setCustomIntervalDays(e.target.value)}
+                                placeholder={t("sales.installment.enterDays")}
+                                className="rounded-xl border-2 focus:border-blue-500 transition-colors"
+                              />
+                            </motion.div>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="grid gap-2">
-                            <Label className="text-sm">{t("sales.numberOfInstallments")}</Label>
+                            <Label className="text-sm font-medium">{t("sales.numberOfInstallments")}</Label>
                             <Input
                               type="number"
                               min="1"
@@ -689,24 +840,32 @@ export default function SalesHistoryPage() {
                                   }
                                 }
                               }}
-                              className={installmentError ? "border-red-500" : ""}
+                              className={`rounded-xl border-2 transition-colors ${installmentError ? "border-red-500 focus:border-red-600" : "focus:border-blue-500"}`}
                             />
-                            {installmentError && <p className="text-xs text-red-600">{installmentError}</p>}
+                            {installmentError && <p className="text-xs text-red-600 font-medium">{installmentError}</p>}
                           </div>
                           <div className="grid gap-2">
-                            <Label className="text-sm">{t("sales.firstDueDate")}</Label>
+                            <Label className="text-sm font-medium">{t("sales.firstDueDate")}</Label>
                             <Input
                               type="date"
                               value={firstDueDate}
                               onChange={(e) => setFirstDueDate(e.target.value)}
                               required
+                              className="rounded-xl border-2 focus:border-blue-500 transition-colors"
                             />
                           </div>
                         </div>
                         {installmentCount >= 1 && (
-                          <p className="text-xs sm:text-sm text-neutral-600 mt-2">
-                            {t("sales.eachInstallment")}: ${(totalAmount / installmentCount).toFixed(2)}
-                          </p>
+                          <motion.p
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-sm text-neutral-700 mt-4 p-3 bg-white/50 rounded-xl backdrop-blur-sm border border-white/60"
+                          >
+                            <span className="font-medium">{t("sales.eachInstallment")}:</span>{" "}
+                            <span className="font-bold text-blue-600">
+                              ${(finalTotal / installmentCount).toFixed(2)}
+                            </span>
+                          </motion.p>
                         )}
                       </div>
                     )}
