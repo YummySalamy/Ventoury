@@ -4,12 +4,25 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { MessageCircle, Package, User, Calendar, DollarSign, Loader2, CheckCircle2, Share2 } from "lucide-react"
+import {
+  MessageCircle,
+  Package,
+  User,
+  Calendar,
+  DollarSign,
+  Loader2,
+  CheckCircle2,
+  Share2,
+  Percent,
+} from "lucide-react"
+import { TbDiscount } from "react-icons/tb"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { ShareInvoiceModal } from "./ShareInvoiceModal"
+import { RegisterPaymentModal } from "./RegisterPaymentModal"
 import type { Installment } from "@/hooks/useInstallments"
 import { useTranslation } from "@/hooks/useTranslation"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface SaleDetailsModalProps {
   sale: any | null
@@ -19,10 +32,13 @@ interface SaleDetailsModalProps {
 
 export function SaleDetailsModal({ sale, open, onClose }: SaleDetailsModalProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [installments, setInstallments] = useState<Installment[]>([])
   const [loadingInstallments, setLoadingInstallments] = useState(false)
   const [payingInstallment, setPayingInstallment] = useState<string | null>(null)
   const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [marketplaceSlug, setMarketplaceSlug] = useState<string | null>(null)
+  const [registerPaymentOpen, setRegisterPaymentOpen] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -51,6 +67,20 @@ export function SaleDetailsModal({ sale, open, onClose }: SaleDetailsModalProps)
       loadInstallments()
     }
   }, [sale, open])
+
+  useEffect(() => {
+    const fetchMarketplaceSlug = async () => {
+      if (!user) return
+
+      const { data, error } = await supabase.from("profiles").select("marketplace_slug").eq("id", user.id).single()
+
+      if (!error && data) {
+        setMarketplaceSlug(data.marketplace_slug)
+      }
+    }
+
+    fetchMarketplaceSlug()
+  }, [user])
 
   const handleMarkAsPaid = async (installmentId: string) => {
     setPayingInstallment(installmentId)
@@ -88,20 +118,42 @@ export function SaleDetailsModal({ sale, open, onClose }: SaleDetailsModalProps)
     }
   }
 
+  const refreshInstallments = async () => {
+    if (!sale || sale.payment_type !== "credit") return
+
+    setLoadingInstallments(true)
+    try {
+      const { data, error } = await supabase
+        .from("installment_payments")
+        .select("*")
+        .eq("sale_id", sale.id)
+        .order("payment_number", { ascending: true })
+
+      if (!error && data) {
+        setInstallments(data)
+      }
+    } catch (error) {
+      // Error handled silently
+    } finally {
+      setLoadingInstallments(false)
+    }
+  }
+
   if (!sale) return null
 
   const statusConfig: Record<string, { label: string; color: string }> = {
-    paid: { label: t("sales.paid"), color: "bg-green-100 text-green-800" },
-    pending: { label: t("sales.pending"), color: "bg-yellow-100 text-yellow-800" },
-    partial: { label: t("sales.partial"), color: "bg-blue-100 text-blue-800" },
-    cancelled: { label: t("sales.cancelled"), color: "bg-red-100 text-red-800" },
+    paid: { label: t("sales.status.paid"), color: "bg-green-100 text-green-800" },
+    pending: { label: t("sales.status.pending"), color: "bg-yellow-100 text-yellow-800" },
+    partial: { label: t("sales.status.partial"), color: "bg-blue-100 text-blue-800" },
+    cancelled: { label: t("sales.status.cancelled"), color: "bg-red-100 text-red-800" },
   }
 
   const installmentStatusConfig: Record<string, { label: string; color: string }> = {
-    paid: { label: t("sales.paid"), color: "bg-green-100 text-green-800" },
-    pending: { label: t("sales.pending"), color: "bg-yellow-100 text-yellow-800" },
+    paid: { label: t("sales.status.paid"), color: "bg-green-100 text-green-800" },
+    pending: { label: t("sales.status.pending"), color: "bg-yellow-100 text-yellow-800" },
     late: { label: t("sales.modal.overdue"), color: "bg-red-100 text-red-800" },
-    cancelled: { label: t("sales.cancelled"), color: "bg-gray-100 text-gray-800" },
+    cancelled: { label: t("sales.status.cancelled"), color: "bg-gray-100 text-gray-800" },
+    partial: { label: t("sales.status.partial"), color: "bg-blue-100 text-blue-800" },
   }
 
   const getDaysOverdue = (dueDate: string) => {
@@ -124,6 +176,8 @@ export function SaleDetailsModal({ sale, open, onClose }: SaleDetailsModalProps)
   const paidCount = installments.filter((i) => i.status === "paid").length
   const pendingCount = installments.filter((i) => i.status === "pending").length
   const overdueCount = installments.filter((i) => i.status === "late").length
+
+  const hasDiscount = sale?.discount_type && sale?.discount_type !== "none" && sale?.discount_amount > 0
 
   return (
     <>
@@ -216,6 +270,46 @@ export function SaleDetailsModal({ sale, open, onClose }: SaleDetailsModalProps)
                 </div>
               )}
 
+              {hasDiscount && (
+                <div className="border-2 border-orange-500/30 rounded-lg p-3 sm:p-4 bg-white">
+                  <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
+                    <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center">
+                      <TbDiscount className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500" />
+                    </div>
+                    {t("sales.discount.title")}
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs text-neutral-500">{t("sales.discount.type")}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {sale.discount_type === "percentage" ? (
+                          <Percent className="h-4 w-4 text-blue-600" />
+                        ) : (
+                          <DollarSign className="h-4 w-4 text-blue-600" />
+                        )}
+                        <p className="font-medium text-sm">
+                          {sale.discount_type === "percentage"
+                            ? t("sales.discount.percentage")
+                            : t("sales.discount.fixedAmount")}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-neutral-500">{t("sales.discount.value")}</p>
+                      <p className="font-medium text-sm mt-1">
+                        {sale.discount_type === "percentage"
+                          ? `${sale.discount_value}%`
+                          : `$${sale.discount_value.toFixed(2)}`}
+                      </p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-neutral-500">{t("sales.discount.amount")}</p>
+                      <p className="font-semibold text-sm text-red-600 mt-1">-${sale.discount_amount.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="border rounded-lg p-3 sm:p-4">
                 <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
                   <Package className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -241,11 +335,47 @@ export function SaleDetailsModal({ sale, open, onClose }: SaleDetailsModalProps)
                     </div>
                   ))}
                 </div>
+
+                <div className="mt-4 pt-4 border-t space-y-2">
+                  {hasDiscount && (
+                    <>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-neutral-600">{t("sales.discount.subtotal")}:</span>
+                        <span className="font-medium line-through text-neutral-400">
+                          ${sale.subtotal_before_discount.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-neutral-600 flex items-center gap-1">
+                          <TbDiscount className="h-3 w-3 text-orange-500" />
+                          {t("sales.discount.discount")}:
+                        </span>
+                        <span className="font-medium text-red-600">-${sale.discount_amount.toFixed(2)}</span>
+                      </div>
+                    </>
+                  )}
+                  <div className="flex justify-between items-center font-bold text-lg pt-2 border-t">
+                    <span>{t("sales.total")}:</span>
+                    <span className="text-green-600">${sale.total_amount.toFixed(2)}</span>
+                  </div>
+                </div>
               </div>
 
               {sale.payment_type === "credit" && (
                 <div className="border rounded-lg p-3 sm:p-4 bg-gradient-to-br from-neutral-50 to-neutral-100">
-                  <h3 className="font-semibold mb-4 text-base sm:text-lg">{t("sales.modal.installmentPayments")}</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-base sm:text-lg">{t("sales.modal.installmentPayments")}</h3>
+                    {pendingCount > 0 && (
+                      <Button
+                        onClick={() => setRegisterPaymentOpen(true)}
+                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm"
+                        size="sm"
+                      >
+                        <DollarSign className="mr-2 h-4 w-4" />
+                        {t("sales.payment.registerPayment")}
+                      </Button>
+                    )}
+                  </div>
 
                   {!loadingInstallments && installments.length > 0 && (
                     <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
@@ -308,7 +438,7 @@ export function SaleDetailsModal({ sale, open, onClose }: SaleDetailsModalProps)
                                 {t("sales.modal.dueDate")}
                               </th>
                               <th className="text-left py-3 px-2 text-xs sm:text-sm font-semibold text-neutral-700 whitespace-nowrap">
-                                {t("sales.status")}
+                                {t("sales.statusLabel")}
                               </th>
                               <th className="text-left py-3 px-2 text-xs sm:text-sm font-semibold text-neutral-700 whitespace-nowrap">
                                 {t("sales.modal.paidDate")}
@@ -322,13 +452,37 @@ export function SaleDetailsModal({ sale, open, onClose }: SaleDetailsModalProps)
                             {installments.map((installment) => {
                               const daysOverdue =
                                 installment.status === "late" ? getDaysOverdue(installment.due_date) : 0
+                              const hasPartialPayment = installment.status === "partial"
+                              const paidAmount = installment.paid_amount || 0
+                              const remainingAmount = installment.remaining_amount || installment.amount
+                              const progress = hasPartialPayment ? (paidAmount / installment.amount) * 100 : 0
+
                               return (
                                 <tr key={installment.id}>
                                   <td className="py-3 px-2 font-medium text-sm whitespace-nowrap">
                                     {installment.payment_number}
                                   </td>
-                                  <td className="py-3 px-2 font-semibold text-neutral-900 text-sm whitespace-nowrap">
-                                    ${installment.amount.toFixed(2)}
+                                  <td className="py-3 px-2 whitespace-nowrap">
+                                    {hasPartialPayment ? (
+                                      <div className="space-y-1">
+                                        <p className="text-xs text-neutral-500">
+                                          {t("sales.payment.paid")}: ${paidAmount.toFixed(2)}
+                                        </p>
+                                        <div className="w-24 h-1.5 bg-neutral-200 rounded-full overflow-hidden">
+                                          <div
+                                            className="h-full bg-gradient-to-r from-green-500 to-emerald-500"
+                                            style={{ width: `${progress}%` }}
+                                          />
+                                        </div>
+                                        <p className="text-xs font-semibold text-orange-600">
+                                          {t("sales.payment.remaining")}: ${remainingAmount.toFixed(2)}
+                                        </p>
+                                      </div>
+                                    ) : (
+                                      <p className="font-semibold text-neutral-900 text-sm">
+                                        ${installment.amount.toFixed(2)}
+                                      </p>
+                                    )}
                                   </td>
                                   <td className="py-3 px-2 whitespace-nowrap">
                                     <div>
@@ -351,12 +505,14 @@ export function SaleDetailsModal({ sale, open, onClose }: SaleDetailsModalProps)
                                     {installment.paid_date ? new Date(installment.paid_date).toLocaleDateString() : "-"}
                                   </td>
                                   <td className="py-3 px-2 whitespace-nowrap">
-                                    {(installment.status === "pending" || installment.status === "late") && (
+                                    {(installment.status === "pending" ||
+                                      installment.status === "late" ||
+                                      installment.status === "partial") && (
                                       <Button
                                         size="sm"
                                         onClick={() => handleMarkAsPaid(installment.id)}
                                         disabled={payingInstallment === installment.id}
-                                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm text-xs"
+                                        className="bg-black hover:bg-neutral-800 text-white shadow-sm text-xs"
                                       >
                                         {payingInstallment === installment.id ? (
                                           <>
@@ -389,12 +545,22 @@ export function SaleDetailsModal({ sale, open, onClose }: SaleDetailsModalProps)
       </Dialog>
 
       {sale && (
-        <ShareInvoiceModal
-          publicToken={sale.public_token}
-          saleNumber={sale.sale_number}
-          open={shareModalOpen}
-          onClose={() => setShareModalOpen(false)}
-        />
+        <>
+          <ShareInvoiceModal
+            publicToken={sale.public_token}
+            saleNumber={sale.sale_number}
+            marketplaceSlug={marketplaceSlug}
+            open={shareModalOpen}
+            onClose={() => setShareModalOpen(false)}
+          />
+          <RegisterPaymentModal
+            sale={sale}
+            installments={installments}
+            open={registerPaymentOpen}
+            onClose={() => setRegisterPaymentOpen(false)}
+            onSuccess={refreshInstallments}
+          />
+        </>
       )}
     </>
   )

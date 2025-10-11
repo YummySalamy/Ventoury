@@ -165,13 +165,14 @@
     background: transparent;
   }
 
+  /* Changed scrollbar color from muted-foreground to black for better visibility */
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground));
+    background: #0a0a0a;
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--foreground));
+    background: #000000;
   }
 
   /* Focus management for accessibility */

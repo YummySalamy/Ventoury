@@ -55,6 +55,8 @@ import { useTranslation } from "@/hooks/useTranslation"
 import { formatCompactNumber, formatCurrency } from "@/lib/format"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
+import { supabase } from "@/lib/supabase" // Assuming supabase is set up here
+import { useAuth } from "@/contexts/AuthContext" // Added useAuth import
 
 interface CartItem {
   product_id: string
@@ -67,6 +69,7 @@ interface CartItem {
 
 export default function SalesHistoryPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState("")
   const [paymentType, setPaymentType] = useState<"cash" | "credit" | "debit" | "transfer">("credit")
@@ -318,6 +321,28 @@ export default function SalesHistoryPage() {
       return
     }
 
+    if (discountEnabled && discountValue) {
+      const value = Number.parseFloat(discountValue) || 0
+      if (discountType === "percentage" && (value < 0 || value > 100)) {
+        setNotification({
+          open: true,
+          type: "error",
+          title: t("sales.notifications.invalidDiscountTitle"),
+          content: t("sales.notifications.invalidDiscountPercentage"),
+        })
+        return
+      }
+      if (discountType === "fixed" && value > subtotal) {
+        setNotification({
+          open: true,
+          type: "error",
+          title: t("sales.notifications.invalidDiscountTitle"),
+          content: t("sales.notifications.invalidDiscountAmount"),
+        })
+        return
+      }
+    }
+
     if (paymentType === "credit" && (!firstDueDate || installmentCount < 1)) {
       setNotification({
         open: true,
@@ -328,6 +353,18 @@ export default function SalesHistoryPage() {
       return
     }
 
+    if (paymentType === "credit" && installmentFrequency === "custom" && !customIntervalDays) {
+      setNotification({
+        open: true,
+        type: "error",
+        title: t("sales.notifications.invalidInstallmentTitle"),
+        content: t("sales.notifications.customDaysRequired"),
+      })
+      return
+    }
+
+    // Users can now register sales that were forgotten in the past
+
     setIsCreating(true)
 
     try {
@@ -336,11 +373,16 @@ export default function SalesHistoryPage() {
         items: cart,
         payment_type: paymentType,
         notes,
+        discount_type: discountEnabled ? discountType : "none",
+        discount_value: discountEnabled ? Number.parseFloat(discountValue) || 0 : 0,
         installments:
           paymentType === "credit"
             ? {
                 count: installmentCount,
                 first_due_date: firstDueDate,
+                frequency: installmentFrequency,
+                custom_interval_days:
+                  installmentFrequency === "custom" ? Number.parseInt(customIntervalDays) : undefined,
               }
             : undefined,
       })
@@ -353,11 +395,10 @@ export default function SalesHistoryPage() {
         title: t("sales.notifications.saleCreatedTitle"),
         content: t("sales.notifications.saleCreated", {
           items: cart.length,
-          total: finalTotal.toFixed(2), // Use finalTotal
+          total: finalTotal.toFixed(2),
         }),
       })
 
-      // Reset form
       resetForm()
       setIsCreateDialogOpen(false)
     } catch (err: any) {
@@ -395,6 +436,7 @@ export default function SalesHistoryPage() {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [saleToShare, setSaleToShare] = useState<any | null>(null)
+  const [marketplaceSlug, setMarketplaceSlug] = useState<string | null>(null)
 
   const handleShareInvoice = (sale: any) => {
     if (!sale.public_token) {
@@ -421,6 +463,20 @@ export default function SalesHistoryPage() {
     }
     return { color: "bg-green-500", text: t("sales.stockStatus.inStock"), textColor: "text-green-600" }
   }
+
+  useEffect(() => {
+    const fetchMarketplaceSlug = async () => {
+      if (!user) return
+
+      const { data, error } = await supabase.from("profiles").select("marketplace_slug").eq("id", user.id).single()
+
+      if (!error && data) {
+        setMarketplaceSlug(data.marketplace_slug)
+      }
+    }
+
+    fetchMarketplaceSlug()
+  }, [user])
 
   return (
     <div className="p-4 sm:p-6 md:p-8">
@@ -874,7 +930,7 @@ export default function SalesHistoryPage() {
                     <div className="grid gap-2">
                       <Label>{t("sales.notes")}</Label>
                       <textarea
-                        className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        className="flex min-h-[60px] w-full rounded-md border input bg-background px-3 py-2 text-sm"
                         placeholder={t("sales.addNotes")}
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
@@ -1164,7 +1220,7 @@ export default function SalesHistoryPage() {
                         {t("sales.amount")}
                       </th>
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm whitespace-nowrap">
-                        {t("sales.payment")}
+                        {t("sales.paymentLabel")}
                       </th>
                       <th className="text-left py-3 sm:py-4 px-2 sm:px-4 font-semibold text-neutral-900 text-xs sm:text-sm whitespace-nowrap">
                         {t("sales.statusLabel")}
@@ -1304,6 +1360,7 @@ export default function SalesHistoryPage() {
         <ShareInvoiceModal
           publicToken={saleToShare.public_token}
           saleNumber={saleToShare.sale_number}
+          marketplaceSlug={marketplaceSlug}
           open={shareModalOpen}
           onClose={() => {
             setShareModalOpen(false)

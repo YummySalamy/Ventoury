@@ -68,9 +68,7 @@ export const sales = {
   avgOrderValue: "Avg. Order Value",
   items: "Items",
   amount: "Amount",
-  payment: "Payment",
-  partial: "Partial",
-  cancelled: "Cancelled",
+  paymentLabel: "Payment Type",
 
   // Status
   status: {
@@ -96,13 +94,18 @@ export const sales = {
   // Discount
   discount: {
     title: "Apply Discount",
+    applyDiscount: "Apply Discount",
     type: "Discount Type",
     percentage: "Percentage",
     fixed: "Fixed Amount",
+    fixedAmount: "Fixed Amount",
     value: "Discount Value",
     amount: "Discount Amount",
+    discount: "Discount",
     subtotal: "Subtotal",
     total: "Total",
+    enterPercentage: "Enter percentage",
+    enterAmount: "Enter amount",
   },
 
   // Installment frequency
@@ -203,4 +206,40 @@ export const sales = {
   installmentMinError: "Minimum 1 installment required",
   noSalesMatch: "No sales match your filters",
   clearAll: "Clear All",
+  saleNumber: "Sale Number",
+  shareInvoice: "Share Invoice",
+
+  // Payment translations
+  payment: {
+    registerPayment: "Register Payment",
+    description: "Register a payment that will be automatically applied to pending installments",
+    totalSale: "Total Sale",
+    totalPending: "Total Pending",
+    pendingInstallments: "Pending Installments",
+    amountToPay: "Amount to Pay",
+    paymentMethod: "Payment Method",
+    selectMethod: "Select payment method",
+    notes: "Notes",
+    notesPlaceholder: "Add note about this payment (optional)",
+    applicationPreview: "Application Preview",
+    installment: "Installment",
+    willBePaid: "Will be paid in full",
+    partialPayment: "Partial payment",
+    excessWarning: "${{amount}} will remain (all installments will be paid)",
+    processing: "Processing...",
+    success: "Payment Registered",
+    failed: "Failed to register payment",
+    invalidAmount: "Amount must be greater than zero",
+    excessAmount: "Excess Amount",
+    excessAmountDesc: "All installments are paid. ${{amount}} remaining",
+    paid: "Paid",
+    remaining: "Remaining",
+    methods: {
+      cash: "Cash",
+      transfer: "Transfer",
+      card: "Card",
+      check: "Check",
+      other: "Other",
+    },
+  },
 }

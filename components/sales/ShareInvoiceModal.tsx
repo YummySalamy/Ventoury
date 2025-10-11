@@ -11,16 +11,18 @@ import { useTranslation } from "@/hooks/useTranslation"
 interface ShareInvoiceModalProps {
   publicToken: string
   saleNumber: string
+  marketplaceSlug: string // Added marketplaceSlug prop
   open: boolean
   onClose: () => void
 }
 
-export function ShareInvoiceModal({ publicToken, saleNumber, open, onClose }: ShareInvoiceModalProps) {
+export function ShareInvoiceModal({ publicToken, saleNumber, marketplaceSlug, open, onClose }: ShareInvoiceModalProps) {
   const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   const { toast } = useToast()
 
-  const invoiceUrl = typeof window !== "undefined" ? `${window.location.origin}/invoice/${publicToken}` : ""
+  const invoiceUrl =
+    typeof window !== "undefined" ? `${window.location.origin}/${marketplaceSlug}/invoice/${publicToken}` : ""
 
   const handleCopy = async () => {
     try {

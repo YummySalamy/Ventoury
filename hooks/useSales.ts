@@ -26,6 +26,10 @@ export interface Sale {
   sale_number?: string // Added sale_number field
   public_token?: string // Added public_token field for invoice sharing
   created_at: string
+  discount_type?: "none" | "percentage" | "fixed"
+  discount_value?: number
+  discount_amount?: number
+  subtotal_before_discount?: number
 }
 
 export interface CreateSaleData {
@@ -33,9 +37,13 @@ export interface CreateSaleData {
   items: SaleItem[]
   payment_type: "cash" | "credit" | "debit" | "transfer"
   notes?: string
+  discount_type?: "none" | "percentage" | "fixed"
+  discount_value?: number
   installments?: {
     count: number
     first_due_date: string
+    frequency?: "weekly" | "biweekly" | "monthly" | "custom"
+    custom_interval_days?: number
   }
 }
 
@@ -116,86 +124,122 @@ export function useSales() {
         }
       }
 
-      // Calculate total
-      const totalAmount = saleData.items.reduce((sum, item) => sum + item.subtotal, 0)
+      const subtotal = saleData.items.reduce((sum, item) => sum + item.subtotal, 0)
 
-      // Create sale
-      const { data: sale, error: saleError } = await supabase
-        .from("sales")
-        .insert({
-          user_id: user.id,
-          customer_id: saleData.customer_id,
-          total_amount: totalAmount,
-          payment_type: saleData.payment_type,
-          status: saleData.payment_type === "cash" ? "paid" : "pending",
-          total_installments: saleData.installments?.count || null,
-          paid_installments: 0,
-          notes: saleData.notes,
-          sale_number: Math.random().toString(36).substr(2, 9), // Added sale_number generation
-          public_token: Math.random().toString(36).substr(2, 9), // Added public_token generation
-        })
-        .select()
-        .single()
+      let discountAmount = 0
+      const discountType = saleData.discount_type || "none"
+      const discountValue = saleData.discount_value || 0
 
-      if (saleError) throw saleError
-
-      // Create sale items
-      const saleItems = saleData.items.map((item) => ({
-        sale_id: sale.id,
-        product_id: item.product_id,
-        product_name: item.product_name,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        subtotal: item.subtotal,
-      }))
-
-      const { error: itemsError } = await supabase.from("sale_items").insert(saleItems)
-
-      if (itemsError) throw itemsError
-
-      // Update product stock
-      for (const item of saleData.items) {
-        const { data: product } = await supabase
-          .from("products")
-          .select("stock_quantity")
-          .eq("id", item.product_id)
-          .single()
-
-        if (product) {
-          await supabase
-            .from("products")
-            .update({
-              stock_quantity: product.stock_quantity - item.quantity,
-            })
-            .eq("id", item.product_id)
-        }
+      if (discountType === "percentage") {
+        discountAmount = subtotal * (discountValue / 100)
+      } else if (discountType === "fixed") {
+        discountAmount = Math.min(discountValue, subtotal) // Cannot be greater than subtotal
       }
 
-      // Create installments if credit
+      const totalAmount = subtotal - discountAmount
+
       if (saleData.payment_type === "credit" && saleData.installments) {
-        const installmentAmount = totalAmount / saleData.installments.count
-        const installments = []
+        const { data, error } = await supabase.rpc("create_sale_with_installments", {
+          p_user_id: user.id,
+          p_customer_id: saleData.customer_id,
+          p_sale_number: `V-${new Date().toISOString().split("T")[0].replace(/-/g, "")}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+          p_total_amount: totalAmount,
+          p_discount_type: discountType,
+          p_discount_value: discountValue,
+          p_subtotal_before_discount: subtotal,
+          p_num_installments: saleData.installments.count,
+          p_installment_frequency: saleData.installments.frequency || "monthly",
+          p_installment_interval_days: saleData.installments.custom_interval_days || null,
+          p_start_date: saleData.installments.first_due_date,
+          p_notes: saleData.notes || "",
+        })
 
-        for (let i = 0; i < saleData.installments.count; i++) {
-          const dueDate = new Date(saleData.installments.first_due_date)
-          dueDate.setMonth(dueDate.getMonth() + i)
+        if (error) throw error
 
-          installments.push({
-            sale_id: sale.id,
-            payment_number: i + 1,
-            amount: installmentAmount,
-            due_date: dueDate.toISOString().split("T")[0],
-            status: "pending",
+        const saleId = data.sale_id
+
+        for (const item of saleData.items) {
+          await supabase.from("sale_items").insert({
+            sale_id: saleId,
+            product_id: item.product_id,
+            product_name: item.product_name,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            subtotal: item.subtotal,
+          })
+
+          await supabase.rpc("update_product_stock", {
+            product_uuid: item.product_id,
+            quantity_sold: item.quantity,
           })
         }
 
-        const { error: installmentsError } = await supabase.from("installment_payments").insert(installments)
+        const { data: sale } = await supabase
+          .from("sales")
+          .select(
+            `
+            *,
+            customers (name, email, phone),
+            sale_items (
+              *,
+              products (name, sku, image_url)
+            )
+          `,
+          )
+          .eq("id", saleId)
+          .single()
 
-        if (installmentsError) throw installmentsError
+        if (sale) {
+          setSales((prev) => [sale, ...prev])
+        }
+
+        return { data: sale, error: null }
+      } else {
+        const { data: sale, error: saleError } = await supabase
+          .from("sales")
+          .insert({
+            user_id: user.id,
+            customer_id: saleData.customer_id,
+            total_amount: totalAmount,
+            payment_type: saleData.payment_type,
+            status: saleData.payment_type === "cash" ? "paid" : "pending",
+            total_installments: null,
+            paid_installments: null,
+            discount_type: discountType,
+            discount_value: discountValue,
+            discount_amount: discountAmount,
+            subtotal_before_discount: subtotal,
+            notes: saleData.notes,
+            sale_number: `V-${new Date().toISOString().split("T")[0].replace(/-/g, "")}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+          })
+          .select()
+          .single()
+
+        if (saleError) throw saleError
+
+        const saleItems = saleData.items.map((item) => ({
+          sale_id: sale.id,
+          product_id: item.product_id,
+          product_name: item.product_name,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          subtotal: item.subtotal,
+        }))
+
+        const { error: itemsError } = await supabase.from("sale_items").insert(saleItems)
+
+        if (itemsError) throw itemsError
+
+        for (const item of saleData.items) {
+          await supabase.rpc("update_product_stock", {
+            product_uuid: item.product_id,
+            quantity_sold: item.quantity,
+          })
+        }
+
+        setSales((prev) => [sale, ...prev])
+        return { data: sale, error: null }
       }
-
-      setSales((prev) => [sale, ...prev])
-      return { data: sale, error: null }
     } catch (err: any) {
       console.error("Error creating sale:", err)
       return { data: null, error: err.message }

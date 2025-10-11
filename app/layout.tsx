@@ -48,7 +48,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${montserrat.variable} ${openSans.variable} antialiased`}>
-      <body className="font-sans bg-background text-foreground overflow-x-hidden">
+      <body className="font-sans bg-background text-foreground">
         <LocaleProvider>
           <AuthProvider>{children}</AuthProvider>
         </LocaleProvider>
